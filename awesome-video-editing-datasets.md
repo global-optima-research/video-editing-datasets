@@ -11,7 +11,6 @@ A curated list of public datasets and benchmarks for video editing research.
 - [Video Subject Swapping](#video-subject-swapping)
 - [Video Inpainting](#video-inpainting)
 - [Video Editing Quality Assessment](#video-editing-quality-assessment)
-- [Evaluation Metrics](#evaluation-metrics)
 
 ---
 
@@ -288,32 +287,6 @@ Benchmarks focused on evaluating the quality of edited videos.
 - **Paper**: [TDVE-Assessor: Benchmarking and Evaluating the Quality of Text-Driven Video Editing](https://arxiv.org/html/2505.19535)
 - **Size**: 3,857 edited videos from 12 models, 8 editing categories
 - **Annotations**: 173,565 human ratings across 3 dimensions (quality, alignment, structural consistency)
-
----
-
-## Evaluation Metrics
-
-Common metrics used across video editing benchmarks.
-
-### Automatic Metrics
-
-| Metric | Description | Used In |
-|--------|-------------|---------|
-| **CLIP Score** | Text-video alignment via CLIP embeddings | TokenFlow, StableVideo, IVEBench |
-| **LPIPS** | Perceptual similarity (LPIPS-P: vs original, LPIPS-T: temporal) | General |
-| **FVD** | Fréchet Video Distance | VEditBench, IVEBench |
-| **FID** | Fréchet Inception Distance (per-frame) | VEditBench |
-| **CIA Score** | Cross-Instance Accuracy (editing leakage) | MIVE |
-| **VEScore** | MLLM-based automatic evaluation | VEBench |
-| **FiVE-Acc** | VLM-based editing success metric | FiVE-Bench |
-
-### Human Evaluation Dimensions
-
-- **Textual Faithfulness**: How well the edit matches the text prompt
-- **Temporal Consistency**: Smoothness and coherence across frames
-- **Visual Quality**: Overall aesthetic and clarity
-- **Structure Preservation**: Maintaining unedited regions
-- **Subject Identity**: Consistency of swapped subject appearance
 
 ---
 
