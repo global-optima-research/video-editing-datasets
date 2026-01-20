@@ -139,45 +139,90 @@ Product Video Template Transfer 训练数据集构建方案。
 
 **工具**: Segment Anything Model 2 (SAM2)
 
+> 详细技术分析见 [papers/sam2-analysis.md](papers/sam2-analysis.md)
+
 **输入**: 模板视频 V_i
 
-**输出**: 逐帧 Mask 序列 M_i = {m_1, m_2, ..., m_T}
+**输出**:
+- 逐帧 Mask 序列 M_i = {m_1, m_2, ..., m_T}
+- 逐帧 Box 序列 (用于 VideoAnyDoor)
 
 **流程**:
 ```python
 # 伪代码
-1. 首帧自动检测商品 (或使用 Grounding DINO 定位)
-2. SAM2 分割首帧商品区域
-3. SAM2 视频模式自动传播到所有帧
-4. 输出: 每帧的二值 Mask
+from sam2.build_sam import build_sam2_video_predictor
+
+# 1. 初始化模型 (推荐 SAM2-Large)
+predictor = build_sam2_video_predictor("sam2_hiera_large.pt")
+
+# 2. 首帧提供 Box 提示 (从商品检测模型获得)
+box = detect_product(first_frame)  # Grounding DINO
+predictor.add_box_prompt(frame_idx=0, box=box, obj_id=1)
+
+# 3. 传播到所有帧 (Memory Attention 自动跟踪)
+masks, boxes = predictor.propagate()
+
+# 输出: masks (T, H, W), boxes (T, 4)
 ```
 
+**性能指标**:
+| 指标 | 值 |
+|------|-----|
+| 速度 | 43.8 FPS (A100) |
+| 显存 | ~8 GB (SAM2-Large) |
+| 单视频耗时 | ~4 秒 (50帧) |
+
 **注意事项**:
-- 处理遮挡情况 (商品被手遮挡)
-- 处理多商品情况 (选择主商品)
-- Mask 平滑处理 (避免帧间抖动)
+- 处理遮挡情况 (Memory Attention 可跨越短暂遮挡)
+- 处理多商品情况 (每个商品分配独立 obj_id)
+- Mask 平滑处理 (后处理时序平滑)
 
 #### 4.1.2 背景修复 (Video Inpainting)
 
-**工具选项**:
-| 工具 | 优势 | 劣势 |
-|------|------|------|
-| ProPainter | 开源，效果好 | 速度较慢 |
-| E2FGVI | 快速 | 大区域效果一般 |
-| STTN | 平衡 | 需要调参 |
+**推荐工具**: ProPainter (ICCV 2023 SOTA)
 
-**输入**: 模板视频 V_i + Mask 序列 M_i
+> 详细技术分析见 [papers/propainter-analysis.md](papers/propainter-analysis.md)
+
+**工具对比**:
+| 工具 | PSNR | 优势 | 劣势 |
+|------|------|------|------|
+| **ProPainter** | **35.17** | SOTA 质量，开源 | 速度较慢 (~2 FPS) |
+| E²FGVI | 33.71 | 快速 | 大区域效果一般 |
+| STTN | 32.34 | 平衡 | 时序不一致 |
+
+**输入**: 模板视频 V_i + Mask 序列 M_i (SAM2 输出)
 
 **输出**: 干净背景视频 B_i (商品区域被背景填充)
 
 **流程**:
 ```python
 # 伪代码
-1. 扩展 Mask (膨胀操作，覆盖商品边缘和阴影)
-2. Video Inpainting 模型填充 Mask 区域
-3. 时序一致性检查
-4. 输出: 无商品的背景视频
+from propainter import ProPainter
+
+model = ProPainter(device='cuda')
+
+# 推荐参数
+inpainted_frames = model.inpaint(
+    frames=frames,
+    masks=masks,
+    flow_mask_dilate=8,   # 光流掩码膨胀
+    mask_dilate=4,        # 分割掩码膨胀 (覆盖边缘残留)
+    ref_stride=10,        # 参考帧间隔
+    neighbor_length=10,   # 邻近帧数量
+)
 ```
+
+**性能指标**:
+| 指标 | 值 |
+|------|-----|
+| 速度 | ~2 FPS (720p, A100) |
+| 显存 | ~10 GB (720p) |
+| 单视频耗时 | ~25 秒 (50帧) |
+
+**核心技术**:
+- 双域传播 (图像域 + 特征域)
+- 循环光流补全
+- 掩码引导稀疏 Transformer
 
 #### 4.1.3 预处理产物
 
@@ -238,12 +283,21 @@ target_image.save(f"{ID}_target_nobg.png")
 
 #### 4.3.1 VideoAnyDoor 调用
 
+> 详细技术分析见 [papers/videoanydoor-analysis.md](papers/videoanydoor-analysis.md)
+
 **输入**:
-- `background_video`: 干净背景视频 B_i
+- `background_video`: 干净背景视频 B_i (ProPainter 输出)
 - `reference_image`: 去背景商品图 T_j'
-- `mask_sequence`: Mask 序列 M_i (定义插入位置)
+- `box_sequence`: Box 序列 (SAM2 输出，定义插入位置)
 
 **输出**: 合成视频 V'_ij
+
+**核心组件**:
+| 组件 | 作用 |
+|------|------|
+| ID Extractor | DINOv2 提取商品特征 |
+| Pixel Warper | 将参考图像特征 warp 到目标位置 |
+| Box Control | 控制商品位置和运动轨迹 |
 
 **配置**:
 ```python
@@ -251,7 +305,7 @@ config = {
     "model": "VideoAnyDoor",
     "guidance_scale": 7.5,
     "num_inference_steps": 50,
-    "control_mode": "box",  # 使用 bbox 而非关键点
+    "control_mode": "box",  # 使用 bbox 控制位置
 }
 ```
 
@@ -432,15 +486,17 @@ pvtt-training-dataset/
 
 ### 6.1 计算资源
 
-| 阶段 | 单样本耗时 | 53 样本总耗时 | GPU 需求 |
-|------|-----------|--------------|----------|
-| SAM2 分割 | ~30s | ~30 min | 1× A100 |
-| Video Inpainting | ~2 min | ~2 hours | 1× A100 |
-| 商品去背景 | ~5s | ~5 min | CPU |
-| VideoAnyDoor | ~1 min | ~45 hours (2756对) | 1× A100 |
-| 质量评估 | ~10s | ~8 hours | 1× A100 |
+| 阶段 | 单样本耗时 | 53 样本总耗时 | GPU 需求 | 显存 |
+|------|-----------|--------------|----------|------|
+| SAM2 分割 | ~4s (50帧) | ~4 min | 1× A100 | 8 GB |
+| ProPainter 修复 | ~25s (50帧) | ~22 min | 1× A100 | 10 GB |
+| 商品去背景 | ~5s | ~5 min | CPU | - |
+| VideoAnyDoor | ~1 min | ~46 hours (2756对) | 1× A100 | 16 GB |
+| 质量评估 | ~10s | ~8 hours | 1× A100 | 8 GB |
 
 **总计**: ~55 GPU-hours (单卡 A100)
+
+> 性能数据来源: [SAM2 分析](papers/sam2-analysis.md), [ProPainter 分析](papers/propainter-analysis.md)
 
 ### 6.2 存储资源
 
@@ -526,10 +582,24 @@ pvtt-training-dataset/
 
 ## 10. 参考资料
 
-- [VideoAnyDoor](https://arxiv.org/abs/2501.01427) - SIGGRAPH 2025
+### 论文
+
+| 论文 | 用途 | 链接 |
+|------|------|------|
+| **VideoAnyDoor** | 视频物体插入 | [arxiv](https://arxiv.org/abs/2501.01427) / [分析](papers/videoanydoor-analysis.md) |
+| **SAM2** | 视频分割 | [arxiv](https://arxiv.org/abs/2408.00714) / [分析](papers/sam2-analysis.md) |
+| **ProPainter** | 视频修复 | [arxiv](https://arxiv.org/abs/2309.03897) / [分析](papers/propainter-analysis.md) |
+
+### 代码仓库
+
 - [SAM2](https://github.com/facebookresearch/segment-anything-2) - Meta
 - [ProPainter](https://github.com/sczhou/ProPainter) - Video Inpainting
 - [rembg](https://github.com/danielgatis/rembg) - 图像去背景
+
+### 内部文档
+
+- [papers/README.md](papers/README.md) - 论文分析索引
+- [papers/video-object-insertion.md](papers/video-object-insertion.md) - Video Object Insertion 综合调研
 
 ---
 

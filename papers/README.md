@@ -33,6 +33,13 @@
 |------|----------|------|
 | **综合调研** | VideoAnyDoor, Anything in Any Scene 等 | [video-object-insertion.md](video-object-insertion.md) |
 
+### Pipeline 组件
+
+| 论文 | 核心贡献 | 文档 |
+|------|----------|------|
+| **SAM2** | 视频分割，Streaming 架构，Memory Attention | [sam2-analysis.md](sam2-analysis.md) |
+| **ProPainter** | 视频修复，双域传播，稀疏 Transformer | [propainter-analysis.md](propainter-analysis.md) |
+
 ---
 
 ## 快速对比
@@ -55,6 +62,13 @@
 | 语义点 | ✅ 支持 | 稀疏点不约束整体形状 |
 | Box 序列 | ✅ 支持 | 只约束位置，不约束形状 |
 
+### Pipeline 组件对比
+
+| 组件 | 作用 | 速度 (A100) | 显存 | PVTT 用途 |
+|------|------|-------------|------|-----------|
+| **SAM2** | 视频分割 | 43.8 FPS | ~8 GB | 提取 Mask/Box 序列 |
+| **ProPainter** | 视频修复 | ~2 FPS (720p) | ~10 GB | 移除原商品 |
+
 ---
 
 ## PVTT 推荐方案
@@ -71,9 +85,14 @@
 Pipeline:
 模板视频 → SAM2 分割 → Mask 序列
     ↓              ↓
-    └── Inpainting → 干净背景
+    └── ProPainter → 干净背景
                         ↓
-新商品图 + Mask 序列 + 背景 → VideoAnyDoor → 合成视频
+新商品图 + Box 序列 + 背景 → VideoAnyDoor → 合成视频
+
+各组件详见:
+├── SAM2: [sam2-analysis.md](sam2-analysis.md)
+├── ProPainter: [propainter-analysis.md](propainter-analysis.md)
+└── VideoAnyDoor: [videoanydoor-analysis.md](videoanydoor-analysis.md)
 ```
 
 ---
@@ -84,12 +103,14 @@ Pipeline:
 video-editing-datasets/
 ├── motion-lora.md             # Motion LoRA 技术详解 (含 Wan2.1/2.2)
 └── papers/
-    ├── paper-analysis.md          # 本文件 (索引)
+    ├── README.md                  # 本文件 (索引)
     ├── ditto-1m-analysis.md       # Ditto-1M 数据集构建
     ├── i2vedit-analysis.md        # I2VEdit 运动保持
     ├── videoswap-analysis.md      # VideoSwap 语义点替换
     ├── videoanydoor-analysis.md   # VideoAnyDoor 物体插入
-    └── video-object-insertion.md  # Video Object Insertion 综合调研
+    ├── video-object-insertion.md  # Video Object Insertion 综合调研
+    ├── sam2-analysis.md           # SAM2 视频分割
+    └── propainter-analysis.md     # ProPainter 视频修复
 ```
 
 ---
