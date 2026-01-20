@@ -6,11 +6,10 @@ A curated list of public datasets and benchmarks for video editing research, inc
 
 ## Contents
 
-- [Text-Guided Video Editing (TGVE)](#text-guided-video-editing-tgve)
-- [Instruction-Guided Video Editing (IVE)](#instruction-guided-video-editing-ive) 🆕
+- [Text/Instruction-Guided Video Editing](#textinstruction-guided-video-editing)
 - [Video Subject Swapping](#video-subject-swapping)
 - [Video Editing Quality Assessment](#video-editing-quality-assessment)
-- [Video Editing Understanding](#video-editing-understanding) 🆕
+- [Video Editing Understanding](#video-editing-understanding)
 - [Image-to-Video (I2V)](#image-to-video-i2v)
 - [Large-Scale Video Editing](#large-scale-video-editing)
 - [Foundation Video Datasets](#foundation-video-datasets)
@@ -18,32 +17,62 @@ A curated list of public datasets and benchmarks for video editing research, inc
 
 ---
 
-## Text-Guided Video Editing (TGVE)
+## Text/Instruction-Guided Video Editing
 
-Datasets for evaluating text-driven video editing methods.
+Datasets for text-driven and instruction-based video editing. TGVE uses source/target prompts; IVE uses edit instructions — both are included here as they target similar tasks.
 
-| Dataset | Size | Resolution | Edit Types | Venue | Source |
-|---------|------|------------|------------|-------|--------|
-| **VEditBench** 🆕 | 420 videos | Varied | 6 tasks (insert/remove/swap/scene/motion/style) | ICLR 2025 | Real-world |
-| **OpenVE-Bench** 🆕 | - | 720P | 8 categories (SA + NSA edits) | arXiv 2025.12 | OpenVE-3M |
-| LOVEU-TGVE-2024 | 200 videos | Varied (2s-48s) | Insert, Remove, Change, Scene, Motion, Style | CVPR 2024 | Panda-70M |
-| LOVEU-TGVE-2023 | 76 videos, 304 prompts | 480×480 | Style, Background, Object, Multiple | CVPR 2023 | DAVIS, YouTube, Videvo |
-| BalanceCC | 100 videos | - | Creative & Controllable | CVPR 2024 | Real-world scenes |
-| TGVE-Plus | - | - | Factorized editing | 2024 | Meta Research |
+### Evaluation Benchmarks
 
-### VEditBench 🆕
+| Dataset | Size | Resolution | Edit Types | Venue |
+|---------|------|------------|------------|-------|
+| **VEditBench** | 420 videos | Varied | 6 tasks (insert/remove/swap/scene/motion/style) | ICLR 2025 |
+| **IVEBench** | 600 videos | ≥2K source | 8 categories, 35 subcategories | arXiv 2025.10 |
+| **OpenVE-Bench** | - | 720P | 8 categories (SA + NSA edits) | arXiv 2025.12 |
+| LOVEU-TGVE-2024 | 200 videos | Varied (2s-48s) | Insert, Remove, Change, Scene, Motion, Style | CVPR 2024 |
+| LOVEU-TGVE-2023 | 76 videos | 480×480 | Style, Background, Object, Multiple | CVPR 2023 |
+| BalanceCC | 100 videos | - | Creative & Controllable | CVPR 2024 |
+
+### Training Datasets
+
+| Dataset | Size | Resolution | Venue |
+|---------|------|------------|-------|
+| **OpenVE-3M** | 3M+ triplets | 720P | arXiv 2025.12 |
+| **InsViE-1M** | 1M triplets | High-res | ICCV 2025 |
+| VIVID-10M | 9.7M samples | - | arXiv 2024.11 |
+
+---
+
+### VEditBench
 
 - **Paper**: [VEditBench: Holistic Benchmark for Text-Guided Video Editing](https://openreview.net/forum?id=6325Jzc9eR) (ICLR 2025)
 - **Size**: 420 real-world videos (300 short 2-4s + 120 long 10-20s)
 - **Tasks**: Object Insertion, Object Removal, Object Swap, Scene Replacement, Motion Change, Style Translation
 - **Metrics**: 9 evaluation dimensions for semantic fidelity and visual quality
-- **Highlight**: Most comprehensive TGVE benchmark with diverse video lengths.
 
-### OpenVE-Bench 🆕
+### IVEBench
+
+- **Paper**: [IVEBench: Modern Benchmark Suite for Instruction-Guided Video Editing Assessment](https://arxiv.org/abs/2510.11647) (arXiv Oct 2025)
+- **Size**: 600 high-quality source videos, 32-1024 frames
+- **Tasks**: 8 categories with 35 subcategories
+- **Metrics**: 12 metrics across 3 dimensions (video quality, instruction compliance, video fidelity)
+- **Source**: Pexels, Mixkit, UltraVideo (≥2K resolution)
+
+### OpenVE-3M / OpenVE-Bench
 
 - **Paper**: [OpenVE-3M: A Large-Scale High-Quality Dataset for Instruction-Guided Video Editing](https://arxiv.org/abs/2512.07826) (arXiv Dec 2025)
-- **Details**: Universal, multi-category benchmark evaluating 3 key dimensions with high human alignment.
-- **Categories**: Spatially-aligned (Global Style, Background Change, Local Change/Remove/Add, Subtitles) + Non-spatially-aligned (Camera Multi-Shot, Creative Edit)
+- **Dataset**: [Lewandofski/OpenVE-3M](https://huggingface.co/datasets/Lewandofski/OpenVE-3M) (HuggingFace)
+- **Size**: 3,000,000+ video editing triplets, 65-129 frames per video
+- **Resolution**: 720P (1280×720 / 720×1280)
+- **Categories**: Spatially-aligned (Global Style, Background Change, Local Change/Remove/Add, Subtitles Edit) + Non-spatially-aligned (Camera Multi-Shot Edit, Creative Edit)
+- **License**: CC-BY-NC-4.0
+- **Affiliations**: ByteDance & Zhejiang University
+
+### InsViE-1M
+
+- **Paper**: [InsViE-1M: Effective Instruction-based Video Editing with Elaborate Dataset Construction](https://arxiv.org/abs/2503.20287) (ICCV 2025)
+- **Code**: [langmanbusi/InsViE](https://github.com/langmanbusi/insvie)
+- **Size**: 1M high-quality instruction-video editing triplets
+- **Pipeline**: Two-stage editing-filtering with GPT-4o quality control
 
 ### LOVEU-TGVE-2023
 
@@ -68,46 +97,11 @@ Datasets for evaluating text-driven video editing methods.
 - **License**: CC-BY-NC 4.0
 - **Paper**: Video Editing via Factorized Diffusion Distillation
 
----
+### VIVID-10M
 
-## Instruction-Guided Video Editing (IVE)
-
-Large-scale datasets for training instruction-based video editing models. 🆕
-
-| Dataset | Size | Resolution | Categories | Venue |
-|---------|------|------------|------------|-------|
-| **OpenVE-3M** | 3M+ triplets | 720P (1280×720) | 8 categories | arXiv 2025.12 |
-| **InsViE-1M** | 1M triplets | High-res | Instruction-based | ICCV 2025 |
-| **IVEBench** | 600 videos | ≥2K source | 8 categories, 35 subcategories | arXiv 2025.10 |
-| VIVID-10M | 9.7M samples | - | Local editing | arXiv 2024.11 |
-
-### OpenVE-3M 🆕
-
-- **Paper**: [OpenVE-3M: A Large-Scale High-Quality Dataset for Instruction-Guided Video Editing](https://arxiv.org/abs/2512.07826) (arXiv Dec 2025)
-- **Dataset**: [Lewandofski/OpenVE-3M](https://huggingface.co/datasets/Lewandofski/OpenVE-3M) (HuggingFace)
-- **Size**: 3,000,000+ video editing triplets, 65-129 frames per video
-- **Resolution**: 720P (1280×720 / 720×1280)
-- **Categories**: Spatially-aligned (Global Style, Background Change, Local Change/Remove/Add, Subtitles Edit) + Non-spatially-aligned (Camera Multi-Shot Edit, Creative Edit)
-- **Avg Instruction Length**: 40.6 words
-- **License**: CC-BY-NC-4.0
-- **Affiliations**: ByteDance & Zhejiang University
-
-### InsViE-1M 🆕
-
-- **Paper**: [InsViE-1M: Effective Instruction-based Video Editing with Elaborate Dataset Construction](https://arxiv.org/abs/2503.20287) (ICCV 2025)
-- **Code**: [langmanbusi/InsViE](https://github.com/langmanbusi/insvie)
-- **Size**: 1M high-quality instruction-video editing triplets
-- **Pipeline**: Two-stage editing-filtering with GPT-4o quality control
-- **Note**: First model built upon video generation models for instruction-based editing.
-
-### IVEBench 🆕
-
-- **Paper**: [IVEBench: Modern Benchmark Suite for Instruction-Guided Video Editing Assessment](https://arxiv.org/abs/2510.11647) (arXiv Oct 2025)
-- **Size**: 600 high-quality source videos, 32-1024 frames
-- **Tasks**: 8 categories with 35 subcategories
-- **Metrics**: 12 metrics across 3 dimensions (video quality, instruction compliance, video fidelity)
-- **Source**: Pexels, Mixkit, UltraVideo (≥2K resolution)
-- **Highlight**: Integrates both traditional metrics and MLLM-based assessments.
+- **Paper**: [VIVID-10M: A Dataset and Baseline for Versatile and Interactive Video Local Editing](https://arxiv.org/abs/2411.15260) (Nov 2024)
+- **Size**: 9.7M samples
+- **Details**: First large-scale hybrid image-video local editing dataset.
 
 ---
 
@@ -186,9 +180,9 @@ Benchmarks focused on evaluating the quality of edited videos.
 
 ## Video Editing Understanding
 
-Benchmarks for evaluating Video LLMs on understanding video editing concepts. 🆕
+Benchmarks for evaluating Video LLMs on understanding video editing concepts.
 
-### VEU-Bench 🆕
+### VEU-Bench
 
 - **Paper**: [VEU-Bench: Towards Comprehensive Understanding of Video Editing](https://arxiv.org/abs/2504.17828) (CVPR 2025)
 - **Website**: [CVPR 2025 Poster](https://cvpr.thecvf.com/virtual/2025/poster/34180)
@@ -231,19 +225,13 @@ Benchmarks for evaluating image-conditioned video generation.
 
 ## Large-Scale Video Editing
 
-Large-scale datasets for training video editing models. See also [Instruction-Guided Video Editing (IVE)](#instruction-guided-video-editing-ive) for OpenVE-3M (3M), InsViE-1M (1M).
+Large-scale datasets for training video editing models. See [Text/Instruction-Guided Video Editing](#textinstruction-guided-video-editing) for details.
 
 | Dataset | Size | Type | Paper |
 |---------|------|------|-------|
-| **OpenVE-3M** 🆕 | 3M+ triplets | Instruction-based | [arXiv 2512.07826](https://arxiv.org/abs/2512.07826) |
-| **InsViE-1M** 🆕 | 1M triplets | Instruction-based | [ICCV 2025](https://arxiv.org/abs/2503.20287) |
+| **OpenVE-3M** | 3M+ triplets | Instruction-based | [arXiv 2512.07826](https://arxiv.org/abs/2512.07826) |
+| **InsViE-1M** | 1M triplets | Instruction-based | [ICCV 2025](https://arxiv.org/abs/2503.20287) |
 | VIVID-10M | 9.7M samples | Local editing | [arXiv 2411.15260](https://arxiv.org/abs/2411.15260) |
-
-### VIVID-10M
-
-- **Paper**: [VIVID-10M: A Dataset and Baseline for Versatile and Interactive Video Local Editing](https://arxiv.org/abs/2411.15260) (Nov 2024)
-- **Size**: 9.7M samples
-- **Details**: First large-scale hybrid image-video local editing dataset. Covers wide range of video editing tasks.
 
 ---
 
@@ -306,17 +294,17 @@ Most relevant datasets for the task of transferring product video templates:
 |----------|---------|-----------|
 | ⭐⭐⭐⭐⭐ | VideoSwap Dataset | Subject swapping with motion preservation |
 | ⭐⭐⭐⭐⭐ | DreamSwapV-Benchmark | Mask-guided subject swapping evaluation |
-| ⭐⭐⭐⭐⭐ | VEditBench 🆕 | Object Swap task, diverse video lengths |
-| ⭐⭐⭐⭐ | OpenVE-3M 🆕 | Large-scale training data, Local Change category |
+| ⭐⭐⭐⭐⭐ | VEditBench | Object Swap task, diverse video lengths |
+| ⭐⭐⭐⭐ | OpenVE-3M | Large-scale training data, Local Change category |
 | ⭐⭐⭐⭐ | LOVEU-TGVE-2024 | Object Change editing type |
 | ⭐⭐⭐⭐ | VBench-I2V | I2V evaluation metrics (Subject/Background Consistency) |
-| ⭐⭐⭐ | IVEBench 🆕 | Modern evaluation protocol with MLLM |
+| ⭐⭐⭐ | IVEBench | Modern evaluation protocol with MLLM |
 | ⭐⭐⭐ | MIVE Dataset | Multi-instance editing |
 
 ### 2025 Highlights
 
 ```
-🆕 Key 2025 Additions:
+Key 2025 Additions:
 
 Training Data:
 ├── OpenVE-3M (3M+ triplets, 720P, ByteDance)
