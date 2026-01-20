@@ -6,7 +6,8 @@ A curated list of public datasets and benchmarks for video editing research.
 
 ## Contents
 
-- [Text/Instruction-Guided Video Editing](#textinstruction-guided-video-editing)
+- [Training Datasets](#training-datasets)
+- [Evaluation Benchmarks](#evaluation-benchmarks)
 - [Video Subject Swapping](#video-subject-swapping)
 - [Video Inpainting](#video-inpainting)
 - [Video Editing Quality Assessment](#video-editing-quality-assessment)
@@ -14,52 +15,27 @@ A curated list of public datasets and benchmarks for video editing research.
 
 ---
 
-## Text/Instruction-Guided Video Editing
+## Training Datasets
 
-Datasets for text-driven and instruction-based video editing. TGVE uses source/target prompts; IVE uses edit instructions — both are included here as they target similar tasks.
-
-### Evaluation Benchmarks
-
-| Dataset | Size | Resolution | Edit Types | Venue |
-|---------|------|------------|------------|-------|
-| **VEditBench** | 420 videos | Varied | 6 tasks (insert/remove/swap/scene/motion/style) | ICLR 2025 |
-| **IVEBench** | 600 videos | ≥2K source | 8 categories, 35 subcategories | arXiv 2025.10 |
-| **FiVE-Bench** | 100 videos, 420 prompts | - | 6 fine-grained tasks | ICCV 2025 |
-| **RVEBenchmark** | 100 videos, 519 queries | - | Reasoning editing (3 levels) | arXiv 2025.11 |
-| **OpenVE-Bench** | - | 720P | 8 categories (SA + NSA edits) | arXiv 2025.12 |
-| **DAVIS-Edit** | 2 subsets | 480p | Text + Image based V2V editing | TCSVT 2025 |
-| LOVEU-TGVE-2024 | 200 videos | Varied (2s-48s) | Insert, Remove, Change, Scene, Motion, Style | CVPR 2024 |
-| LOVEU-TGVE-2023 | 76 videos | 480×480 | Style, Background, Object, Multiple | CVPR 2023 |
-| BalanceCC | 100 videos | - | Creative & Controllable | CVPR 2024 |
-
-### Training Datasets
+Large-scale datasets for training video editing models.
 
 | Dataset | Size | Resolution | Venue |
 |---------|------|------------|-------|
+| **VIVID-10M** | 9.7M samples | - | arXiv 2024.11 |
 | **OpenVE-3M** | 3M+ triplets | 720P | arXiv 2025.12 |
 | **Señorita-2M** | 2M pairs | Varied | NeurIPS D&B 2025 |
 | **Ditto-1M** | 1M triplets | 1280×720, 101 frames | arXiv 2025.10 |
 | **InsViE-1M** | 1M triplets | High-res | ICCV 2025 |
-| VIVID-10M | 9.7M samples | - | arXiv 2024.11 |
+| **VPData** | 390K+ clips | - | SIGGRAPH 2025 |
+| **ROVI** | 5,650 videos | - | CVPR 2024 |
 
----
+### VIVID-10M
 
-### VEditBench
+- **Paper**: [VIVID-10M: A Dataset and Baseline for Versatile and Interactive Video Local Editing](https://arxiv.org/abs/2411.15260) (Nov 2024)
+- **Size**: 9.7M samples
+- **Details**: First large-scale hybrid image-video local editing dataset.
 
-- **Paper**: [VEditBench: Holistic Benchmark for Text-Guided Video Editing](https://openreview.net/forum?id=6325Jzc9eR) (ICLR 2025)
-- **Size**: 420 real-world videos (300 short 2-4s + 120 long 10-20s)
-- **Tasks**: Object Insertion, Object Removal, Object Swap, Scene Replacement, Motion Change, Style Translation
-- **Metrics**: 9 evaluation dimensions for semantic fidelity and visual quality
-
-### IVEBench
-
-- **Paper**: [IVEBench: Modern Benchmark Suite for Instruction-Guided Video Editing Assessment](https://arxiv.org/abs/2510.11647) (arXiv Oct 2025)
-- **Size**: 600 high-quality source videos, 32-1024 frames
-- **Tasks**: 8 categories with 35 subcategories
-- **Metrics**: 12 metrics across 3 dimensions (video quality, instruction compliance, video fidelity)
-- **Source**: Pexels, Mixkit, UltraVideo (≥2K resolution)
-
-### OpenVE-3M / OpenVE-Bench
+### OpenVE-3M
 
 - **Paper**: [OpenVE-3M: A Large-Scale High-Quality Dataset for Instruction-Guided Video Editing](https://arxiv.org/abs/2512.07826) (arXiv Dec 2025)
 - **Dataset**: [Lewandofski/OpenVE-3M](https://huggingface.co/datasets/Lewandofski/OpenVE-3M) (HuggingFace)
@@ -68,13 +44,6 @@ Datasets for text-driven and instruction-based video editing. TGVE uses source/t
 - **Categories**: Spatially-aligned (Global Style, Background Change, Local Change/Remove/Add, Subtitles Edit) + Non-spatially-aligned (Camera Multi-Shot Edit, Creative Edit)
 - **License**: CC-BY-NC-4.0
 - **Affiliations**: ByteDance & Zhejiang University
-
-### InsViE-1M
-
-- **Paper**: [InsViE-1M: Effective Instruction-based Video Editing with Elaborate Dataset Construction](https://arxiv.org/abs/2503.20287) (ICCV 2025)
-- **Code**: [langmanbusi/InsViE](https://github.com/langmanbusi/insvie)
-- **Size**: 1M high-quality instruction-video editing triplets
-- **Pipeline**: Two-stage editing-filtering with GPT-4o quality control
 
 ### Señorita-2M
 
@@ -96,6 +65,63 @@ Datasets for text-driven and instruction-based video editing. TGVE uses source/t
 - **Categories**: Scenes (23%), Single-person (34%), Group activities (33%), Objects (10%)
 - **Cost**: 12,000 GPU-days to build
 
+### InsViE-1M
+
+- **Paper**: [InsViE-1M: Effective Instruction-based Video Editing with Elaborate Dataset Construction](https://arxiv.org/abs/2503.20287) (ICCV 2025)
+- **Code**: [langmanbusi/InsViE](https://github.com/langmanbusi/insvie)
+- **Size**: 1M high-quality instruction-video editing triplets
+- **Pipeline**: Two-stage editing-filtering with GPT-4o quality control
+
+### VPData
+
+- **Paper**: [VideoPainter: Any-length Video Inpainting and Editing with Plug-and-Play Context Control](https://arxiv.org/abs/2503.05639) (SIGGRAPH 2025)
+- **Dataset**: [TencentARC/VPData](https://huggingface.co/datasets/TencentARC/VPData) (HuggingFace)
+- **Code**: [TencentARC/VideoPainter](https://github.com/TencentARC/VideoPainter)
+- **Size**: 390K+ clips (866.7+ hours), largest video inpainting dataset with segmentation masks and dense captions
+- **Affiliations**: Tencent ARC Lab, CUHK, U Tokyo, U Macau
+
+### ROVI Dataset
+
+- **Paper**: [Towards Language-Driven Video Inpainting via Multimodal Large Language Models](https://openaccess.thecvf.com/content/CVPR2024/papers/Wu_Towards_Language-Driven_Video_Inpainting_via_Multimodal_Large_Language_Models_CVPR_2024_paper.pdf) (CVPR 2024)
+- **Code**: [jianzongwu/Language-Driven-Video-Inpainting](https://github.com/jianzongwu/Language-Driven-Video-Inpainting)
+- **Size**: 5,650 videos, 9,091 inpainting results
+- **Details**: First dataset for language-guided video inpainting (LVI) and interactive video inpainting (IVI)
+
+---
+
+## Evaluation Benchmarks
+
+Benchmarks for evaluating video editing methods.
+
+| Dataset | Size | Edit Types | Venue |
+|---------|------|------------|-------|
+| **VEditBench** | 420 videos | 6 tasks (insert/remove/swap/scene/motion/style) | ICLR 2025 |
+| **IVEBench** | 600 videos | 8 categories, 35 subcategories | arXiv 2025.10 |
+| **FiVE-Bench** | 100 videos, 420 prompts | 6 fine-grained tasks | ICCV 2025 |
+| **RVEBenchmark** | 100 videos, 519 queries | Reasoning editing (3 levels) | arXiv 2025.11 |
+| **OpenVE-Bench** | - | 8 categories (SA + NSA edits) | arXiv 2025.12 |
+| **DAVIS-Edit** | 2 subsets | Text + Image based V2V editing | TCSVT 2025 |
+| **VPBench** | 100 videos | Video inpainting | SIGGRAPH 2025 |
+| **ROSE-Bench** | - | Object removal (side effects) | NeurIPS 2025 |
+| LOVEU-TGVE-2024 | 200 videos | Insert, Remove, Change, Scene, Motion, Style | CVPR 2024 |
+| LOVEU-TGVE-2023 | 76 videos | Style, Background, Object, Multiple | CVPR 2023 |
+| BalanceCC | 100 videos | Creative & Controllable | CVPR 2024 |
+
+### VEditBench
+
+- **Paper**: [VEditBench: Holistic Benchmark for Text-Guided Video Editing](https://openreview.net/forum?id=6325Jzc9eR) (ICLR 2025)
+- **Size**: 420 real-world videos (300 short 2-4s + 120 long 10-20s)
+- **Tasks**: Object Insertion, Object Removal, Object Swap, Scene Replacement, Motion Change, Style Translation
+- **Metrics**: 9 evaluation dimensions for semantic fidelity and visual quality
+
+### IVEBench
+
+- **Paper**: [IVEBench: Modern Benchmark Suite for Instruction-Guided Video Editing Assessment](https://arxiv.org/abs/2510.11647) (arXiv Oct 2025)
+- **Size**: 600 high-quality source videos, 32-1024 frames
+- **Tasks**: 8 categories with 35 subcategories
+- **Metrics**: 12 metrics across 3 dimensions (video quality, instruction compliance, video fidelity)
+- **Source**: Pexels, Mixkit, UltraVideo (≥2K resolution)
+
 ### FiVE-Bench
 
 - **Paper**: [FiVE: A Fine-grained Video Editing Benchmark](https://arxiv.org/abs/2503.13684) (ICCV 2025)
@@ -112,6 +138,12 @@ Datasets for text-driven and instruction-based video editing. TGVE uses source/t
 - **Tasks**: 3 reasoning levels × 3 categories (semantic, spatial, temporal reasoning)
 - **Details**: First benchmark for reasoning-based video editing with implicit instructions
 
+### OpenVE-Bench
+
+- **Paper**: [OpenVE-3M: A Large-Scale High-Quality Dataset for Instruction-Guided Video Editing](https://arxiv.org/abs/2512.07826) (arXiv Dec 2025)
+- **Details**: Universal, multi-category benchmark evaluating 3 key dimensions with high human alignment.
+- **Categories**: Spatially-aligned (Global Style, Background Change, Local Change/Remove/Add, Subtitles) + Non-spatially-aligned (Camera Multi-Shot, Creative Edit)
+
 ### DAVIS-Edit
 
 - **Paper**: [StableV2V: Stablizing Shape Consistency in Video-to-Video Editing](https://arxiv.org/abs/2411.11045) (TCSVT 2025)
@@ -120,6 +152,28 @@ Datasets for text-driven and instruction-based video editing. TGVE uses source/t
 - **Subsets**: DAVIS-Edit-S (similar shape), DAVIS-Edit-C (changing shape)
 - **Tasks**: Text-based and image-based video editing evaluation
 - **Details**: Built on DAVIS structure, addresses shape consistency in V2V editing
+
+### VPBench
+
+- **Paper**: [VideoPainter: Any-length Video Inpainting and Editing with Plug-and-Play Context Control](https://arxiv.org/abs/2503.05639) (SIGGRAPH 2025)
+- **Dataset**: [TencentARC/VPBench](https://huggingface.co/datasets/TencentARC/VPBench) (HuggingFace)
+- **Size**: 100 videos (6s standard) + 16 videos (30s+ long) for evaluation
+- **Details**: Diverse content including objects, humans, animals, landscapes, and multi-range masks
+
+### ROSE-Bench
+
+- **Paper**: [ROSE: Remove Objects with Side Effects in Videos](https://arxiv.org/abs/2508.18633) (NeurIPS 2025)
+- **Dataset**: [Kunbyte/ROSE-Dataset](https://huggingface.co/datasets/Kunbyte/ROSE-Dataset) (HuggingFace)
+- **Code**: [Kunbyte-AI/ROSE](https://github.com/Kunbyte-AI/ROSE)
+- **Website**: [rose2025-inpaint.github.io](https://rose2025-inpaint.github.io/)
+- **Side Effects**: Shadows, Reflections, Light, Translucency, Mirror
+- **Details**: First benchmark for object removal with side effects, synthetic data via Unreal Engine
+
+### VDOR
+
+- **Paper**: [VDOR: A Video-based Dataset for Object Removal via Sequence Consistency](https://arxiv.org/abs/2501.07397) (arXiv Jan 2025)
+- **Details**: Video-based annotation pipeline for realistic illumination-aware object removal
+- **Features**: Triplets of (original frame, background without object, mask), captures realistic lighting/shadow variations
 
 ### LOVEU-TGVE-2023
 
@@ -143,12 +197,6 @@ Datasets for text-driven and instruction-based video editing. TGVE uses source/t
 - **Dataset**: [facebook/tgve_plus](https://huggingface.co/datasets/facebook/tgve_plus) (HuggingFace)
 - **License**: CC-BY-NC 4.0
 - **Paper**: Video Editing via Factorized Diffusion Distillation
-
-### VIVID-10M
-
-- **Paper**: [VIVID-10M: A Dataset and Baseline for Versatile and Interactive Video Local Editing](https://arxiv.org/abs/2411.15260) (Nov 2024)
-- **Size**: 9.7M samples
-- **Details**: First large-scale hybrid image-video local editing dataset.
 
 ---
 
@@ -182,46 +230,15 @@ Datasets specifically designed for replacing subjects/objects in videos while pr
 
 ## Video Inpainting
 
-Datasets for video inpainting and object removal tasks.
+Datasets for video inpainting and object removal tasks. Training datasets (VPData, ROVI) are listed in [Training Datasets](#training-datasets).
 
-| Dataset | Size | Type | Venue |
-|---------|------|------|-------|
-| **VPData** | 390K+ clips | Training | SIGGRAPH 2025 |
-| **VPBench** | 100 videos | Evaluation | SIGGRAPH 2025 |
-| **ROSE-Bench** | - | Eval (Side Effects) | NeurIPS 2025 |
-| **VDOR** | - | Object Removal | arXiv 2025.01 |
-| **ROVI** | 5,650 videos | Training + Eval | CVPR 2024 |
+| Dataset | Type | Venue |
+|---------|------|-------|
+| **VPBench** | Evaluation | SIGGRAPH 2025 |
+| **ROSE-Bench** | Evaluation (Side Effects) | NeurIPS 2025 |
+| **VDOR** | Object Removal | arXiv 2025.01 |
 
-### VPData / VPBench
-
-- **Paper**: [VideoPainter: Any-length Video Inpainting and Editing with Plug-and-Play Context Control](https://arxiv.org/abs/2503.05639) (SIGGRAPH 2025)
-- **Dataset**: [TencentARC/VPData](https://huggingface.co/datasets/TencentARC/VPData), [TencentARC/VPBench](https://huggingface.co/datasets/TencentARC/VPBench) (HuggingFace)
-- **Code**: [TencentARC/VideoPainter](https://github.com/TencentARC/VideoPainter)
-- **VPData**: 390K+ clips (866.7+ hours), largest video inpainting dataset with segmentation masks and dense captions
-- **VPBench**: 100 videos (6s standard) + 16 videos (30s+ long) for evaluation
-- **Affiliations**: Tencent ARC Lab, CUHK, U Tokyo, U Macau
-
-### ROSE-Bench
-
-- **Paper**: [ROSE: Remove Objects with Side Effects in Videos](https://arxiv.org/abs/2508.18633) (NeurIPS 2025)
-- **Dataset**: [Kunbyte/ROSE-Dataset](https://huggingface.co/datasets/Kunbyte/ROSE-Dataset) (HuggingFace)
-- **Code**: [Kunbyte-AI/ROSE](https://github.com/Kunbyte-AI/ROSE)
-- **Website**: [rose2025-inpaint.github.io](https://rose2025-inpaint.github.io/)
-- **Side Effects**: Shadows, Reflections, Light, Translucency, Mirror
-- **Details**: First benchmark for object removal with side effects, synthetic data via Unreal Engine
-
-### VDOR
-
-- **Paper**: [VDOR: A Video-based Dataset for Object Removal via Sequence Consistency](https://arxiv.org/abs/2501.07397) (arXiv Jan 2025)
-- **Details**: Video-based annotation pipeline for realistic illumination-aware object removal
-- **Features**: Triplets of (original frame, background without object, mask), captures realistic lighting/shadow variations
-
-### ROVI Dataset
-
-- **Paper**: [Towards Language-Driven Video Inpainting via Multimodal Large Language Models](https://openaccess.thecvf.com/content/CVPR2024/papers/Wu_Towards_Language-Driven_Video_Inpainting_via_Multimodal_Large_Language_Models_CVPR_2024_paper.pdf) (CVPR 2024)
-- **Code**: [jianzongwu/Language-Driven-Video-Inpainting](https://github.com/jianzongwu/Language-Driven-Video-Inpainting)
-- **Size**: 5,650 videos, 9,091 inpainting results
-- **Details**: First dataset for language-guided video inpainting (LVI) and interactive video inpainting (IVI)
+See [Evaluation Benchmarks](#evaluation-benchmarks) for detailed descriptions.
 
 ---
 
@@ -278,6 +295,7 @@ Common metrics used across video editing benchmarks.
 | **FID** | Fréchet Inception Distance (per-frame) | VEditBench |
 | **CIA Score** | Cross-Instance Accuracy (editing leakage) | MIVE |
 | **VEScore** | MLLM-based automatic evaluation | VEBench |
+| **FiVE-Acc** | VLM-based editing success metric | FiVE-Bench |
 
 ### Human Evaluation Dimensions
 
@@ -312,11 +330,11 @@ Most relevant datasets for the task of transferring product video templates:
 
 ```
 Training Data (Million-scale):
+├── VIVID-10M (9.7M samples, local editing)
 ├── OpenVE-3M (3M+ triplets, 720P, ByteDance)
 ├── Señorita-2M (2M pairs, NeurIPS D&B 2025)
 ├── Ditto-1M (1M triplets, 1280×720)
 ├── InsViE-1M (1M triplets, ICCV 2025)
-├── VIVID-10M (9.7M samples, local editing)
 └── VPData (390K clips, video inpainting, SIGGRAPH 2025)
 
 Evaluation Benchmarks:
