@@ -54,6 +54,16 @@ results/propainter/
 
 **评分: 2/10 - 失败**
 
+#### 结果截图
+
+| Frame 0 | Frame 50 |
+|---------|----------|
+| ![frame0](../results/propainter/frames/frame_001.png) | ![frame50](../results/propainter/frames/frame_002.png) |
+
+| Frame 100 | Frame 150 |
+|-----------|-----------|
+| ![frame100](../results/propainter/frames/frame_003.png) | ![frame150](../results/propainter/frames/frame_004.png) |
+
 #### 主要问题
 
 1. **阴影残留**: 手链本体被移除，但阴影轮廓完全保留，在桌面上留下明显的圆环痕迹
