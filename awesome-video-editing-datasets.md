@@ -26,6 +26,7 @@ Large-scale datasets for training video editing models.
 | **Señorita-2M** | 2M pairs | Varied | NeurIPS D&B 2025 |
 | **Ditto-1M** | 1M triplets | 1280×720, 101 frames | arXiv 2025.10 |
 | **InsViE-1M** | 1M triplets | High-res | ICCV 2025 |
+| **ReCo-Data** | 500K+ pairs | - | arXiv 2025.12 |
 | **VPData** | 390K+ clips | - | SIGGRAPH 2025 |
 | **ROVI** | 5,650 videos | - | CVPR 2024 |
 
@@ -71,6 +72,15 @@ Large-scale datasets for training video editing models.
 - **Code**: [langmanbusi/InsViE](https://github.com/langmanbusi/insvie)
 - **Size**: 1M high-quality instruction-video editing triplets
 - **Pipeline**: Two-stage editing-filtering with GPT-4o quality control
+
+### ReCo-Data
+
+- **Paper**: [ReCo: Region-Constrained In-Context Video Editing](https://arxiv.org/abs/2512.17650) (arXiv Dec 2025)
+- **Dataset**: [HiDream-ai/ReCo-Data](https://huggingface.co/datasets/HiDream-ai/ReCo-Data) (HuggingFace)
+- **Size**: 500K+ instruction-video pairs
+- **Tasks**: 4 core editing tasks (local object manipulations, global style transformations)
+- **Pipeline**: Multi-stage pipeline using VLLMs for filtering/captioning + synthetic video generation
+- **Details**: In-context learning paradigm with region-based constraints in latent and attention spaces
 
 ### VPData
 
@@ -335,6 +345,7 @@ Training Data (Million-scale):
 ├── Señorita-2M (2M pairs, NeurIPS D&B 2025)
 ├── Ditto-1M (1M triplets, 1280×720)
 ├── InsViE-1M (1M triplets, ICCV 2025)
+├── ReCo-Data (500K pairs, in-context editing)
 └── VPData (390K clips, video inpainting, SIGGRAPH 2025)
 
 Evaluation Benchmarks:
