@@ -125,22 +125,65 @@ for frame_idx, obj_ids, mask_logits in predictor.propagate_in_video(inference_st
 
 ---
 
-## 经验总结
+## Box Prompt vs Point Prompt 对比实验
+
+### 实验目的
+
+探索自动化获取 prompt 的方案，避免手动指定坐标。
+
+### 实验设置
+
+对黑色手链使用 box prompt：
+```python
+box = [250, 400, 700, 750]  # [x_min, y_min, x_max, y_max]
+predictor.add_new_points_or_box(..., box=box)
+```
+
+### 结果对比
+
+| Prompt 方式 | 内部空白区域 | 需要负样本 | 自动化难度 |
+|------------|-------------|-----------|-----------|
+| Point prompt | ❌ 包含 | 是 | 高（需手动调点） |
+| **Box prompt** | ✅ 排除 | 否 | **低（只需 bbox）** |
+
+**Point prompt 结果** (包含内部):
+
+![point_prompt](../results/sam2-segmentation/mask_overlay_v4_reference.jpg)
+
+**Box prompt 结果** (正确排除内部):
+
+![box_prompt](../results/sam2-segmentation/mask_box_test.jpg)
 
 ### 关键发现
 
-1. **单点容易失败**: 单个点击可能击中背景或只分割部分区域
-2. **多点更可靠**: 多个点覆盖物体不同部分可确保完整分割
-3. **需要迭代**: 首次尝试很难一次成功，需要查看结果并调整
+**Box prompt 对环形物体效果更好**：SAM2 能正确识别手链是"带状物体"而非"填充区域"。
 
-### 最佳实践
+### 自动化方案
+
+```
+Grounding DINO ("bracelet") → bbox 坐标
+            ↓
+SAM2 (box prompt) → 正确的 mask
+```
+
+不需要手动指定正负样本点。
+
+---
+
+## 经验总结
+
+### Point Prompt 最佳实践（手动标注场景）
 
 1. 每个物体使用 3-4 个**正样本**点击点覆盖不同部分
 2. 对于环形物体（手链、项链），添加**负样本**点排除内部空白
 3. 正样本 (label=1): 点在目标物体上
 4. 负样本 (label=0): 点在不想要的区域（如内部空白）
-5. 生成可视化叠加图检查分割效果
-6. 迭代调整直到只分割目标像素
+
+### Box Prompt 最佳实践（自动化场景）
+
+1. 使用检测模型（Grounding DINO）获取 bbox
+2. 直接用 box prompt，无需正负样本点
+3. 对环形物体效果优于 point prompt
 
 ---
 
@@ -160,5 +203,7 @@ for frame_idx, obj_ids, mask_logits in predictor.propagate_in_video(inference_st
 - 输出 masks: `5090:/data/xuhao/pvtt-pipeline-test/samples/scene1_masks_v5/`
 - 结果图片:
   - [input_frame.jpg](../results/sam2-segmentation/input_frame.jpg) - 输入首帧
-  - [mask_overlay.jpg](../results/sam2-segmentation/mask_overlay.jpg) - Mask 叠加可视化
+  - [mask_overlay.jpg](../results/sam2-segmentation/mask_overlay.jpg) - Point prompt + 负样本 (v5)
+  - [mask_overlay_v4_reference.jpg](../results/sam2-segmentation/mask_overlay_v4_reference.jpg) - Point prompt 包含内部 (v4)
+  - [mask_box_test.jpg](../results/sam2-segmentation/mask_box_test.jpg) - Box prompt 测试
   - [mask_frame0.png](../results/sam2-segmentation/mask_frame0.png) - 原始 Mask
