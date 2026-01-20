@@ -70,15 +70,34 @@ Etsy 商品视频通常是多镜头的，需要先切分为单镜头片段再进
 
 ## 镜头内容分析
 
-### Scene 1 (0-7.67s, 184帧)
-- **主要镜头**：两个情侣手链特写
-- **适合用于**：主要测试用例，手链清晰可见
+### Scene 1 (0-7.67s, 184帧) ⭐ 主测试用例
+
+![Scene 1](../results/shot-detection/scene1_frame.jpg)
+
+- **类型**: 平铺产品图 (Flat-lay)
+- **内容**: 两个情侣手链并排展示
+  - 黑色手链 (刻字 "Lily")
+  - 银色手链 (刻字 "Ben")
+- **背景**: 紫色丝绸 + 白色心形装饰
+- **适合用于**: ✅ 主要测试用例，无遮挡，手链清晰完整
 
 ### Scene 2 (7.67-10.89s, 77帧)
-- **待确认**：需查看具体内容
+
+![Scene 2](../results/shot-detection/scene2_frame.jpg)
+
+- **类型**: 手持特写
+- **内容**: 双手展示手链扣环细节
+- **背景**: 紫色丝绸
+- **适合用于**: ⚠️ 有手部遮挡，分割难度高
 
 ### Scene 3 (10.89-14.81s, 94帧)
-- **待确认**：需查看具体内容
+
+![Scene 3](../results/shot-detection/scene3_frame.jpg)
+
+- **类型**: 佩戴展示
+- **内容**: 手腕佩戴单个手链
+- **背景**: 灰色窗帘
+- **适合用于**: ⚠️ 需要处理手腕遮挡，背景不同
 
 ---
 
@@ -105,9 +124,9 @@ scenedetect -i source_video.mp4 detect-content split-video
 
 ## 下一步
 
-- [ ] 提取 Scene 1 首帧作为 SAM2 分割的参考
-- [ ] 在首帧上标注手链位置 (point prompt)
-- [ ] 运行 SAM2 生成 mask 序列
+- [x] 提取 Scene 1 首帧作为 SAM2 分割的参考
+- [x] 在首帧上标注手链位置 (point prompt)
+- [x] 运行 SAM2 生成 mask 序列 → [sam2-segmentation_2026-01-20.md](sam2-segmentation_2026-01-20.md)
 - [ ] 运行 VideoPainter 移除手链
 - [ ] 运行 VideoAnyDoor 插入项链
 
