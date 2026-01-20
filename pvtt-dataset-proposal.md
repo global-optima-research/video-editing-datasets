@@ -4,9 +4,43 @@ Product Video Template Transfer 训练数据集构建方案。
 
 ---
 
+## 0. 背景与动机
+
+### 0.1 为什么需要训练数据集
+
+我们已有 **Training-free 两阶段方法** (RF-Solver TI2V) 作为基线：
+
+```
+Training-free 基线 (RF-Solver TI2V):
+源视频 → RF-Solver Inversion → 噪声 → 替换首帧 → TI2V Denoising → 编辑视频
+```
+
+该方法已在 bracelet → necklace 等任务上取得不错效果，但仍有提升空间。
+
+**核心逻辑**：
+```
+要训练出超越 Training-free 基线的模型
+    ↓
+训练数据质量必须 >> Training-free 结果质量
+    ↓
+需要用更精细的 Pipeline 生成高质量 Ground Truth
+```
+
+### 0.2 数据集构建方案定位
+
+| 方案 | 用途 | 质量要求 |
+|------|------|----------|
+| RF-Solver TI2V | 推理基线 | 中等 (已有) |
+| **本方案 (VideoAnyDoor/InsertAnywhere)** | **生成训练数据** | **高** |
+| 训练后的模型 | 推理 (目标) | 高 |
+
+本方案的目标是构建 **高质量训练数据集**，而非作为推理方法。
+
+---
+
 ## 1. 目标
 
-构建用于训练 PVTT 模型的大规模视频编辑数据集。
+构建用于训练 PVTT 模型的大规模视频编辑数据集，质量需显著优于 Training-free 基线。
 
 ### 1.1 任务定义
 
