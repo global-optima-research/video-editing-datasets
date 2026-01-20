@@ -205,11 +205,108 @@ Clip 2 (帧 17-32): 训练时，将 Clip 1 的 K/V 拼接到当前 Temporal Atte
 
 ---
 
+## 应用到 Wan2.1 / Wan2.2
+
+### 架构差异
+
+| 特性 | SVD (I2VEdit) | Wan2.1/2.2 |
+|------|---------------|------------|
+| 骨架 | UNet | DiT (Diffusion Transformer) |
+| 范式 | DDPM | Flow Matching |
+| 时序建模 | Temporal Attention 层 | Transformer Block 内的时序注意力 |
+| 文本编码 | CLIP | T5 Encoder + Cross-Attention |
+| VAE | 2D VAE | **3D Causal VAE (Wan-VAE)** |
+
+### Wan 的注意力结构
+
+```
+Wan Transformer Block:
+├── Spatial Self-Attention (帧内)
+├── Temporal Self-Attention (跨帧) ← Motion LoRA 插入点
+├── Cross-Attention (文本条件)
+└── FFN
+```
+
+### Motion LoRA 在 Wan 上的实现
+
+```python
+# 伪代码: 在 Wan 的 Temporal Attention 插入 LoRA
+for block in wan_model.transformer_blocks:
+    # 只对 Temporal Self-Attention 加 LoRA
+    temporal_attn = block.temporal_self_attention
+    temporal_attn.q_proj = LoRALayer(temporal_attn.q_proj, rank=256)
+    temporal_attn.k_proj = LoRALayer(temporal_attn.k_proj, rank=256)
+    temporal_attn.v_proj = LoRALayer(temporal_attn.v_proj, rank=256)
+
+    # Spatial Attention 和 Cross-Attention 不动
+```
+
+### 推荐配置
+
+根据 Wan LoRA 微调实践:
+
+| 参数 | 推荐值 | 说明 |
+|------|--------|------|
+| LoRA Rank | 256-512 | Wan 论文建议 512 效果更好 |
+| 目标层 | Temporal Self-Attention | 只训练时序注意力 |
+| Learning Rate | 1e-4 ~ 5e-5 | 标准 LoRA 学习率 |
+| 训练步数 | 200-500 | 单视频微调 |
+
+### 工具支持
+
+| 工具 | 支持情况 | 链接 |
+|------|----------|------|
+| **DiffSynth-Studio** | ✅ 官方支持 LoRA 训练 | [GitHub](https://github.com/modelscope/DiffSynth-Studio) |
+| **Wan2GP** | ✅ 低显存优化 | [GitHub](https://github.com/deepbeepmeep/Wan2GP) |
+| ComfyUI | ✅ LoRA 加载 | [Docs](https://docs.comfy.org/tutorials/video/wan/wan2_2) |
+
+### 关键注意事项
+
+1. **3D VAE 差异**: Wan-VAE 是 3D 因果 VAE，时序压缩比 4×，空间 8×。Latent 已包含时序信息。
+
+2. **Flow Matching vs DDPM**: Wan 用 Flow Matching，训练目标是速度场而非噪声预测:
+   ```
+   DDPM Loss: ||ε - ε_θ(x_t, t)||²
+   Flow Loss: ||v - v_θ(x_t, t)||²  (v = dx/dt)
+   ```
+
+3. **Wan2.2 MoE 架构**: Wan2.2 使用 Mixture of Experts，高噪声和低噪声各一个专家。LoRA 需要对两个专家都加，或只加低噪声专家（细节生成）。
+
+4. **兼容性**: Wan2.1 训练的 LoRA 可直接用于 Wan2.2 低噪声模型。
+
+### 示例: DiffSynth-Studio 训练 Motion LoRA
+
+```bash
+# 安装
+pip install diffsynth
+
+# 训练脚本 (简化)
+python train_lora.py \
+    --model Wan-AI/Wan2.1-I2V-14B-720P \
+    --video_path source_video.mp4 \
+    --output_dir ./motion_lora \
+    --lora_rank 256 \
+    --target_modules temporal_attn \
+    --learning_rate 1e-4 \
+    --max_steps 300
+```
+
+### 待验证问题
+
+1. Wan 的 Temporal Attention 结构是否与 SVD 一致？
+2. 3D VAE 的时序编码是否影响 Motion LoRA 效果？
+3. Flow Matching 范式下，最优训练步数？
+
+---
+
 ## 代码资源
 
 - **官方实现**: [github.com/Vicky0522/I2VEdit](https://github.com/Vicky0522/I2VEdit)
 - **论文**: [arxiv.org/abs/2405.16537](https://arxiv.org/abs/2405.16537)
 - **项目主页**: [i2vedit.github.io](https://i2vedit.github.io/)
+- **Wan2.1**: [github.com/Wan-Video/Wan2.1](https://github.com/Wan-Video/Wan2.1)
+- **Wan2.2**: [github.com/Wan-Video/Wan2.2](https://github.com/Wan-Video/Wan2.2)
+- **DiffSynth-Studio**: [github.com/modelscope/DiffSynth-Studio](https://github.com/modelscope/DiffSynth-Studio)
 
 ---
 
