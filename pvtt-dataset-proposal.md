@@ -44,6 +44,8 @@ Product Video Template Transfer 训练数据集构建方案。
 | 商品图片 | 53 张 | 对应商品的产品图 |
 | 品类 | 11 个 | Jewelry, Toys, Home, Clothing 等 |
 
+> **注意**: Etsy 视频通常为多镜头拼接，需要先进行镜头切分
+
 ### 2.2 交叉配对策略
 
 利用现有数据交叉配对生成训练样本：
@@ -90,7 +92,9 @@ Product Video Template Transfer 训练数据集构建方案。
 │                                                                  │
 │  Stage 1: Preprocessing (预处理)                                 │
 │  ┌─────────────────────────────────────────────────────────┐    │
-│  │  模板视频 V_i                                            │    │
+│  │  模板视频 V_i (多镜头)                                   │    │
+│  │       ↓                                                  │    │
+│  │  镜头切分 → 单镜头片段 {V_i^1, V_i^2, ...}               │    │
 │  │       ↓                                                  │    │
 │  │  SAM2 分割 → 商品 Mask 序列 M_i                          │    │
 │  │       ↓                                                  │    │
@@ -135,13 +139,67 @@ Product Video Template Transfer 训练数据集构建方案。
 
 ### 4.1 Stage 1: Preprocessing
 
+#### 4.1.0 镜头切分 (Shot Detection)
+
+**背景**: Etsy 商品视频通常由多个镜头拼接而成，包含:
+- 不同角度的商品展示
+- 特写镜头
+- 使用场景演示
+- 转场效果
+
+**目标**: 将多镜头视频切分为单镜头片段，每个片段内相机运动连续
+
+**工具选项**:
+
+| 工具 | 方法 | 优势 | 劣势 |
+|------|------|------|------|
+| **PySceneDetect** | 内容变化检测 | 开源，简单 | 需调阈值 |
+| **TransNetV2** | 深度学习 | 准确率高 | 需 GPU |
+| FFmpeg | 场景变化滤镜 | 无依赖 | 精度一般 |
+
+**推荐方案**: PySceneDetect (ContentDetector)
+
+```python
+from scenedetect import detect, ContentDetector, split_video_ffmpeg
+
+# 检测镜头边界
+scenes = detect(video_path, ContentDetector(threshold=27.0))
+
+# 切分视频
+split_video_ffmpeg(video_path, scenes, output_dir)
+
+# 输出: video_001.mp4, video_002.mp4, ...
+```
+
+**参数调优**:
+
+| 参数 | 默认值 | 说明 |
+|------|--------|------|
+| `threshold` | 27.0 | 检测灵敏度，越低越敏感 |
+| `min_scene_len` | 15 帧 | 最短镜头长度 |
+
+**质量过滤**:
+```python
+def filter_shots(shots, min_duration=2.0, min_frames=50):
+    """过滤过短的镜头"""
+    return [s for s in shots if s.duration >= min_duration and s.frames >= min_frames]
+```
+
+**预期效果**:
+| 原始视频 | 切分后 |
+|----------|--------|
+| 1 个多镜头视频 (30s) | 3-5 个单镜头片段 (5-10s 每个) |
+| 53 个原始视频 | 150-250 个单镜头片段 |
+
+> 切分后配对数量将显著增加: 200 × 199 = 39,800 对
+
 #### 4.1.1 商品分割 (SAM2)
 
 **工具**: Segment Anything Model 2 (SAM2)
 
 > 详细技术分析见 [papers/sam2-analysis.md](papers/sam2-analysis.md)
 
-**输入**: 模板视频 V_i
+**输入**: 单镜头视频片段 V_i (经过镜头切分)
 
 **输出**:
 - 逐帧 Mask 序列 M_i = {m_1, m_2, ..., m_T}
@@ -484,40 +542,48 @@ pvtt-training-dataset/
 
 ## 6. 资源估算
 
-### 6.1 计算资源
+### 6.1 镜头切分后的数据规模
 
-| 阶段 | 单样本耗时 | 53 样本总耗时 | GPU 需求 | 显存 |
-|------|-----------|--------------|----------|------|
-| SAM2 分割 | ~4s (50帧) | ~4 min | 1× A100 | 8 GB |
-| ProPainter 修复 | ~25s (50帧) | ~22 min | 1× A100 | 10 GB |
-| 商品去背景 | ~5s | ~5 min | CPU | - |
-| VideoAnyDoor | ~1 min | ~46 hours (2756对) | 1× A100 | 16 GB |
-| 质量评估 | ~10s | ~8 hours | 1× A100 | 8 GB |
+| 原始数据 | 切分后预估 | 说明 |
+|----------|-----------|------|
+| 53 个视频 | ~200 个单镜头片段 | 平均每视频 3-4 个镜头 |
+| - | ~39,800 个配对 | 200 × 199 |
 
-**总计**: ~55 GPU-hours (单卡 A100)
+### 6.2 计算资源
+
+| 阶段 | 单样本耗时 | 200 片段总耗时 | GPU 需求 | 显存 |
+|------|-----------|---------------|----------|------|
+| 镜头切分 | ~2s | ~2 min (53视频) | CPU | - |
+| SAM2 分割 | ~4s (50帧) | ~13 min | 1× A100 | 8 GB |
+| ProPainter 修复 | ~25s (50帧) | ~83 min | 1× A100 | 10 GB |
+| 商品去背景 | ~5s | ~17 min | CPU | - |
+| VideoAnyDoor | ~1 min | ~660 hours (39800对) | 1× A100 | 16 GB |
+| 质量评估 | ~10s | ~110 hours | 1× A100 | 8 GB |
+
+**总计**: ~770 GPU-hours (单卡 A100)
 
 > 性能数据来源: [SAM2 分析](papers/sam2-analysis.md), [ProPainter 分析](papers/propainter-analysis.md)
 
-### 6.2 存储资源
+### 6.3 存储资源
 
-| 数据类型 | 单样本大小 | 总大小估算 |
-|----------|-----------|-----------|
-| 源视频 | ~1.6 MB | 85 MB |
-| 背景视频 | ~1.6 MB | 85 MB |
-| 合成视频 | ~1.6 MB | 4.4 GB (2756对) |
-| Mask 序列 | ~10 MB | 530 MB |
+| 数据类型 | 单样本大小 | 总大小估算 (200片段) |
+|----------|-----------|---------------------|
+| 源视频片段 | ~0.8 MB | 160 MB |
+| 背景视频 | ~0.8 MB | 160 MB |
+| 合成视频 | ~0.8 MB | 32 GB (39800对) |
+| Mask 序列 | ~5 MB | 1 GB |
 | 商品图片 | ~0.5 MB | 27 MB |
 
-**总计**: ~5.1 GB
+**总计**: ~33 GB
 
-### 6.3 扩展性
+### 6.4 扩展性
 
-| 规模 | 源样本 | 配对数 | GPU-hours | 存储 |
-|------|--------|--------|-----------|------|
-| PoC | 10 | 90 | ~2 | 200 MB |
-| Small | 53 | 2,756 | ~55 | 5 GB |
-| Medium | 200 | 39,800 | ~800 | 70 GB |
-| Large | 1,000 | 999,000 | ~20,000 | 1.7 TB |
+| 规模 | 原始视频 | 切分后片段 | 配对数 | GPU-hours | 存储 |
+|------|----------|-----------|--------|-----------|------|
+| PoC | 10 | ~40 | 1,560 | ~30 | 1.5 GB |
+| Small | 53 | ~200 | 39,800 | ~770 | 33 GB |
+| Medium | 100 | ~400 | 159,600 | ~3,000 | 130 GB |
+| Large | 500 | ~2,000 | 3,998,000 | ~70,000 | 3.2 TB |
 
 ---
 
@@ -527,35 +593,38 @@ pvtt-training-dataset/
 
 **目标**: 验证 Pipeline 可行性
 
-**范围**: 10 个样本，90 个配对
+**范围**: 10 个视频 → ~40 个片段 → ~1,500 个配对
 
 **验证点**:
+- [ ] 镜头切分效果 (PySceneDetect 阈值调优)
 - [ ] SAM2 分割质量
 - [ ] Video Inpainting 效果
 - [ ] VideoAnyDoor 商品细节保持
 - [ ] 光照适配是否自然
 - [ ] 端到端 Pipeline 可跑通
 
-### Phase 2: 小规模构建 (3-5 天)
+### Phase 2: 小规模构建 (1-2 周)
 
-**目标**: 构建完整的 53 样本数据集
+**目标**: 构建完整的 53 视频数据集
 
-**范围**: 53 个样本，~2,500 个有效配对
+**范围**: 53 个视频 → ~200 个片段 → ~30,000 个有效配对
 
 **任务**:
+- [ ] 全量镜头切分
 - [ ] 全量预处理 (分割 + Inpainting)
-- [ ] 全量配对生成
+- [ ] 全量配对生成 (~770 GPU-hours)
 - [ ] 质量过滤
 - [ ] 数据集打包
 
 ### Phase 3: 扩展收集 (持续)
 
-**目标**: 扩展到 200+ 样本
+**目标**: 扩展到 100+ 视频
 
 **任务**:
 - [ ] 继续收集 Etsy 数据
 - [ ] 平衡各品类样本
 - [ ] 增加困难样本 (wearing, interaction)
+- [ ] 优化镜头切分策略 (过滤无商品镜头)
 
 ---
 
@@ -563,6 +632,9 @@ pvtt-training-dataset/
 
 | 风险 | 影响 | 缓解措施 |
 |------|------|----------|
+| 镜头切分过细 | 片段过短无法使用 | 设置 min_scene_len 阈值 |
+| 镜头切分漏检 | 多镜头混入单片段 | 降低检测阈值 / 人工复核 |
+| 部分镜头无商品 | 无效片段 | 商品检测过滤 (Grounding DINO) |
 | SAM2 分割不准确 | Mask 质量差 | 人工校正 / 换用 GroundedSAM |
 | Inpainting 留痕 | 背景不干净 | 多模型集成 / 手动筛选 |
 | VideoAnyDoor 细节丢失 | 商品不清晰 | 调整 guidance_scale / 后处理 |
@@ -592,6 +664,7 @@ pvtt-training-dataset/
 
 ### 代码仓库
 
+- [PySceneDetect](https://github.com/Breakthrough/PySceneDetect) - 镜头切分
 - [SAM2](https://github.com/facebookresearch/segment-anything-2) - Meta
 - [ProPainter](https://github.com/sczhou/ProPainter) - Video Inpainting
 - [rembg](https://github.com/danielgatis/rembg) - 图像去背景
