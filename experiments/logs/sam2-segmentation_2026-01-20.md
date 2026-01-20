@@ -40,14 +40,18 @@
 
 ## Point Prompts
 
-使用点击提示标注两个手链：
+使用多点击提示标注两个手链（经过多次迭代优化）：
 
-| Object ID | 描述 | 点击位置 (x, y) | Label |
-|-----------|------|----------------|-------|
-| 1 | 手链 1 (黑色, "Lily") | (500, 400) | 1 (positive) |
-| 2 | 手链 2 (银色, "Ben") | (780, 600) | 1 (positive) |
+| Object ID | 描述 | 点击位置 (x, y) | 数量 |
+|-----------|------|----------------|------|
+| 1 | 黑色手链 (Lily) | (550,620), (400,550), (650,700), (300,450) | 4 点 |
+| 2 | 银色手链 (Ben) | (850,320), (950,400), (650,350) | 3 点 |
 
-**注意**: 点击位置为估计值，基于图像中心附近的手链位置。
+**迭代过程**:
+- v1: 单点击中背景，失败
+- v2: 调整点位，黑色手链成功，银色失败
+- v3: 银色成功，黑色只分割内部
+- **v4**: 多点覆盖手链带，两个手链均成功
 
 ---
 
@@ -73,10 +77,10 @@
 ![mask_frame0](../results/sam2-segmentation/mask_frame0.png)
 
 **观察**:
-- ✅ 成功检测到两个手链的环形结构
-- ✅ 手链主体轮廓清晰
-- ⚠️ 存在一些背景噪点（玻璃碗、心形装饰、礼盒被误检）
-- ⚠️ 手链内部空洞未填充（只有边缘）
+- ✅ 两个手链完整分割（带+内部区域）
+- ✅ 黑色手链 (Lily): 手链带、延长链、名牌均被覆盖
+- ✅ 银色手链 (Ben): 编织链、装饰均被覆盖
+- ⚠️ 内部有少量噪点，不影响使用
 
 ### 输出文件
 
@@ -118,18 +122,20 @@ for frame_idx, obj_ids, mask_logits in predictor.propagate_in_video(inference_st
 
 ---
 
-## 问题与改进
+## 经验总结
 
-### 当前问题
+### 关键发现
 
-1. **背景噪点**: 一些装饰物被误识别
-2. **空洞未填充**: 手链是环形，内部空洞在 mask 中显示为白色
+1. **单点容易失败**: 单个点击可能击中背景或只分割部分区域
+2. **多点更可靠**: 多个点覆盖物体不同部分可确保完整分割
+3. **需要迭代**: 首次尝试很难一次成功，需要查看结果并调整
 
-### 改进方向
+### 最佳实践
 
-1. 添加负样本点击排除背景装饰
-2. 使用 box prompt 而非 point prompt 提高精度
-3. 对 mask 进行形态学处理（膨胀、填充）
+1. 每个物体使用 3-4 个点击点
+2. 点击点应覆盖物体的不同部分（边缘、中心、延伸部分）
+3. 生成可视化叠加图检查分割效果
+4. 如果效果不佳，调整点位重新运行
 
 ---
 
@@ -144,9 +150,9 @@ for frame_idx, obj_ids, mask_logits in predictor.propagate_in_video(inference_st
 
 ## 相关文件
 
-- 分割脚本: `5090:/data/xuhao/pvtt-pipeline-test/sam2_segment.py`
+- 分割脚本: `5090:/data/xuhao/pvtt-pipeline-test/sam2_segment_v4.py` (内联)
 - 输入帧: `5090:/data/xuhao/pvtt-pipeline-test/samples/scene1_frames/`
-- 输出 masks: `5090:/data/xuhao/pvtt-pipeline-test/samples/scene1_masks/`
+- 输出 masks: `5090:/data/xuhao/pvtt-pipeline-test/samples/scene1_masks_v4/`
 - 结果图片:
   - [input_frame.jpg](../results/sam2-segmentation/input_frame.jpg) - 输入首帧
   - [mask_overlay.jpg](../results/sam2-segmentation/mask_overlay.jpg) - Mask 叠加可视化
