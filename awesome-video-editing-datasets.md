@@ -213,6 +213,12 @@ Benchmarks for evaluating video editing methods.
 
 Datasets specifically designed for replacing subjects/objects in videos while preserving motion.
 
+| Dataset | Size | Venue |
+|---------|------|-------|
+| **VideoSwap** | 30 videos → ~300 results | CVPR 2024 |
+| **DreamSwapV-Benchmark** | Based on HumanVID | arXiv 2025 |
+| **MIVE** | Multi-instance | arXiv 2024 |
+
 ### VideoSwap Dataset
 
 - **Paper**: [VideoSwap: Customized Video Subject Swapping with Interactive Semantic Point Correspondence](https://arxiv.org/abs/2312.02087) (CVPR 2024)
