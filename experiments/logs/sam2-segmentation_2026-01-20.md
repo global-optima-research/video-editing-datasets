@@ -40,18 +40,21 @@
 
 ## Point Prompts
 
-使用多点击提示标注两个手链（经过多次迭代优化）：
+使用正负样本点击提示（经过多次迭代优化）：
 
-| Object ID | 描述 | 点击位置 (x, y) | 数量 |
-|-----------|------|----------------|------|
-| 1 | 黑色手链 (Lily) | (550,620), (400,550), (650,700), (300,450) | 4 点 |
-| 2 | 银色手链 (Ben) | (850,320), (950,400), (650,350) | 3 点 |
+| Object ID | 描述 | 正样本点 | 负样本点 |
+|-----------|------|---------|---------|
+| 1 | 黑色手链 (Lily) | (550,620), (400,550), (650,700), (300,450) | (500,520), (550,580) |
+| 2 | 银色手链 (Ben) | (850,320), (950,400), (650,350) | (750,380) |
+
+**关键**: 负样本点放在手链内部空白区域，排除背景
 
 **迭代过程**:
 - v1: 单点击中背景，失败
 - v2: 调整点位，黑色手链成功，银色失败
 - v3: 银色成功，黑色只分割内部
-- **v4**: 多点覆盖手链带，两个手链均成功
+- v4: 多点覆盖，但包含了手链内部空白区域
+- **v5**: 添加负样本排除内部，只分割手链本身 ✅
 
 ---
 
@@ -77,10 +80,10 @@
 ![mask_frame0](../results/sam2-segmentation/mask_frame0.png)
 
 **观察**:
-- ✅ 两个手链完整分割（带+内部区域）
-- ✅ 黑色手链 (Lily): 手链带、延长链、名牌均被覆盖
-- ✅ 银色手链 (Ben): 编织链、装饰均被覆盖
-- ⚠️ 内部有少量噪点，不影响使用
+- ✅ 只分割手链本身，内部空白区域被正确排除
+- ✅ 黑色手链 (Lily): 手链带、延长链、名牌、磁扣
+- ✅ 银色手链 (Ben): 编织链、金属装饰
+- ✅ 适合用于 VideoPainter 修复
 
 ### 输出文件
 
@@ -132,10 +135,12 @@ for frame_idx, obj_ids, mask_logits in predictor.propagate_in_video(inference_st
 
 ### 最佳实践
 
-1. 每个物体使用 3-4 个点击点
-2. 点击点应覆盖物体的不同部分（边缘、中心、延伸部分）
-3. 生成可视化叠加图检查分割效果
-4. 如果效果不佳，调整点位重新运行
+1. 每个物体使用 3-4 个**正样本**点击点覆盖不同部分
+2. 对于环形物体（手链、项链），添加**负样本**点排除内部空白
+3. 正样本 (label=1): 点在目标物体上
+4. 负样本 (label=0): 点在不想要的区域（如内部空白）
+5. 生成可视化叠加图检查分割效果
+6. 迭代调整直到只分割目标像素
 
 ---
 
@@ -150,9 +155,9 @@ for frame_idx, obj_ids, mask_logits in predictor.propagate_in_video(inference_st
 
 ## 相关文件
 
-- 分割脚本: `5090:/data/xuhao/pvtt-pipeline-test/sam2_segment_v4.py` (内联)
+- 分割脚本: 内联 Python (见上方迭代过程)
 - 输入帧: `5090:/data/xuhao/pvtt-pipeline-test/samples/scene1_frames/`
-- 输出 masks: `5090:/data/xuhao/pvtt-pipeline-test/samples/scene1_masks_v4/`
+- 输出 masks: `5090:/data/xuhao/pvtt-pipeline-test/samples/scene1_masks_v5/`
 - 结果图片:
   - [input_frame.jpg](../results/sam2-segmentation/input_frame.jpg) - 输入首帧
   - [mask_overlay.jpg](../results/sam2-segmentation/mask_overlay.jpg) - Mask 叠加可视化
