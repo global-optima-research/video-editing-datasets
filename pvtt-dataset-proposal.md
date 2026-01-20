@@ -112,7 +112,7 @@ Product Video Template Transfer 训练数据集构建方案。
 │  │       ↓                                                  │    │
 │  │  SAM2 分割 → 商品 Mask 序列 M_i                          │    │
 │  │       ↓                                                  │    │
-│  │  Video Inpainting → 干净背景视频 B_i                     │    │
+│  │  VideoPainter → 干净背景视频 B_i                         │    │
 │  └─────────────────────────────────────────────────────────┘    │
 │                                                                  │
 │  Stage 2: Pair Generation (配对生成)                             │
@@ -251,16 +251,16 @@ masks, boxes = predictor.propagate()
 
 #### 4.1.2 背景修复 (Video Inpainting)
 
-**推荐工具**: ProPainter (ICCV 2023 SOTA)
+**推荐工具**: VideoPainter (TencentARC, SIGGRAPH 2025)
 
-> 详细技术分析见 [papers/propainter-analysis.md](papers/propainter-analysis.md)
+**代码**: [github.com/TencentARC/VideoPainter](https://github.com/TencentARC/VideoPainter)
 
 **工具对比**:
-| 工具 | PSNR | 优势 | 劣势 |
-|------|------|------|------|
-| **ProPainter** | **35.17** | SOTA 质量，开源 | 速度较慢 (~2 FPS) |
-| E²FGVI | 33.71 | 快速 | 大区域效果一般 |
-| STTN | 32.34 | 平衡 | 时序不一致 |
+| 工具 | 年份 | 架构 | 长视频支持 | 优势 |
+|------|------|------|-----------|------|
+| **VideoPainter** | **SIGGRAPH 2025** | Diffusion DiT | ✅ 原生任意长度 | SOTA，plug-and-play |
+| ProPainter | ICCV 2023 | 光流 + Transformer | ⚠️ 需分块 | 稳定可靠 |
+| E²FGVI | CVPR 2022 | 光流传播 | ⚠️ 需分块 | 速度快 |
 
 **输入**: 模板视频 V_i + Mask 序列 M_i (SAM2 输出)
 
@@ -268,33 +268,30 @@ masks, boxes = predictor.propagate()
 
 **流程**:
 ```python
-# 伪代码
-from propainter import ProPainter
+# VideoPainter 使用示例
+# 参考: https://github.com/TencentARC/VideoPainter
 
-model = ProPainter(device='cuda')
+# 1. 准备输入
+# - masked_video: 带 mask 的视频
+# - mask_sequence: 二值 mask 序列
 
-# 推荐参数
-inpainted_frames = model.inpaint(
-    frames=frames,
-    masks=masks,
-    flow_mask_dilate=8,   # 光流掩码膨胀
-    mask_dilate=4,        # 分割掩码膨胀 (覆盖边缘残留)
-    ref_stride=10,        # 参考帧间隔
-    neighbor_length=10,   # 邻近帧数量
-)
+# 2. 推理
+# VideoPainter 支持 plug-and-play 方式接入任意 Video DiT
+# 使用 context encoder 注入背景信息
 ```
+
+**核心技术**:
+- **双流架构**: Context Encoder (仅 6% 参数) + Video DiT backbone
+- **任意长度支持**: Target Region ID Resampling 技术
+- **Plug-and-Play**: 可接入任意预训练 Video DiT
 
 **性能指标**:
 | 指标 | 值 |
 |------|-----|
-| 速度 | ~2 FPS (720p, A100) |
-| 显存 | ~10 GB (720p) |
-| 单视频耗时 | ~25 秒 (50帧) |
+| 训练数据 | VPData (390K+ clips) |
+| 评测基准 | VPBench |
 
-**核心技术**:
-- 双域传播 (图像域 + 特征域)
-- 循环光流补全
-- 掩码引导稀疏 Transformer
+> **备选方案**: 如果 VideoPainter 部署复杂，可退回使用 [ProPainter](https://github.com/sczhou/ProPainter) (ICCV 2023)
 
 #### 4.1.3 预处理产物
 
@@ -353,12 +350,29 @@ target_image.save(f"{ID}_target_nobg.png")
 
 ### 4.3 Stage 3: Video Synthesis
 
-#### 4.3.1 VideoAnyDoor 调用
+#### 4.3.1 Video Object Insertion 方案选择
 
-> 详细技术分析见 [papers/videoanydoor-analysis.md](papers/videoanydoor-analysis.md)
+**两个候选方案** (均有代码可用，建议 PoC 阶段对比测试):
+
+| 方案 | 发表 | 核心技术 | 代码 |
+|------|------|----------|------|
+| **VideoAnyDoor** | SIGGRAPH 2025 | ID Extractor + Pixel Warper | [GitHub](https://github.com/yuanpengtu/VideoAnydoor) |
+| **InsertAnywhere** | arXiv Dec 2025 | 4D Scene Geometry + Diffusion | [GitHub](https://github.com/myyzzzoooo/InsertAnywhere) |
+
+**InsertAnywhere 优势**:
+- 4D-aware mask generation (更好的遮挡处理)
+- 显式光照适配 (illumination-aware)
+- 声称在 CLIP-I, DINO-I 指标上超越 Pika-Pro, Kling
+
+**VideoAnyDoor 优势**:
+- 已有详细分析文档: [papers/videoanydoor-analysis.md](papers/videoanydoor-analysis.md)
+- Box 序列控制直观
+- 经过 virtual try-on 场景验证
+
+#### 4.3.2 VideoAnyDoor 调用
 
 **输入**:
-- `background_video`: 干净背景视频 B_i (ProPainter 输出)
+- `background_video`: 干净背景视频 B_i (VideoPainter 输出)
 - `reference_image`: 去背景商品图 T_j'
 - `box_sequence`: Box 序列 (SAM2 输出，定义插入位置)
 
@@ -381,7 +395,26 @@ config = {
 }
 ```
 
-#### 4.3.2 Mask 到 Box 转换
+#### 4.3.3 InsertAnywhere 调用 (备选)
+
+**输入**:
+- `video`: 原始视频 (InsertAnywhere 内部处理背景)
+- `reference_image`: 商品图
+- `insertion_mask`: 首帧插入位置 mask
+
+**核心组件**:
+| 组件 | 作用 |
+|------|------|
+| 4D Mask Generator | 重建场景几何，跨帧传播 mask |
+| Diffusion Video Model | 合成物体 + 局部光照变化 |
+| ROSE++ Dataset | 训练数据 (illumination-aware) |
+
+```python
+# InsertAnywhere 使用示例
+# 参考: https://github.com/myyzzzoooo/InsertAnywhere
+```
+
+#### 4.3.4 Mask 到 Box 转换
 
 VideoAnyDoor 支持 Box 序列控制，需要将 Mask 转换为 BBox：
 
@@ -399,7 +432,7 @@ def masks_to_box_sequence(masks):
     return [mask_to_bbox(m) for m in masks]
 ```
 
-#### 4.3.3 尺寸适配
+#### 4.3.5 尺寸适配
 
 源商品和目标商品尺寸可能不同：
 
@@ -613,17 +646,23 @@ pvtt-training-dataset/
 
 ### Phase 1: PoC 验证 (1-2 天)
 
-**目标**: 验证 Pipeline 可行性
+**目标**: 验证 Pipeline 可行性，选择最优模型组合
 
 **范围**: 10 个视频 → ~40 个片段 → ~1,500 个配对
 
 **验证点**:
 - [ ] 镜头切分效果 (PySceneDetect 阈值调优)
 - [ ] SAM2 分割质量
-- [ ] Video Inpainting 效果
-- [ ] VideoAnyDoor 商品细节保持
+- [ ] Video Inpainting 对比: VideoPainter vs ProPainter
+- [ ] Video Object Insertion 对比: **VideoAnyDoor vs InsertAnywhere**
 - [ ] 光照适配是否自然
 - [ ] 端到端 Pipeline 可跑通
+
+**模型选择决策**:
+| 组件 | 候选 A | 候选 B | 选择标准 |
+|------|--------|--------|----------|
+| Inpainting | VideoPainter | ProPainter | 质量、速度、部署难度 |
+| Insertion | VideoAnyDoor | InsertAnywhere | 商品细节保持、光照适配 |
 
 ### Phase 2: 小规模构建 (1-2 周)
 
@@ -659,7 +698,7 @@ pvtt-training-dataset/
 | 部分镜头无商品 | 无效片段 | 商品检测过滤 (Grounding DINO) |
 | SAM2 分割不准确 | Mask 质量差 | 人工校正 / 换用 GroundedSAM |
 | Inpainting 留痕 | 背景不干净 | 多模型集成 / 手动筛选 |
-| VideoAnyDoor 细节丢失 | 商品不清晰 | 调整 guidance_scale / 后处理 |
+| VideoAnyDoor 细节丢失 | 商品不清晰 | 调整 guidance_scale / 换用 InsertAnywhere |
 | 光照不匹配 | 合成不自然 | 添加光照估计模块 |
 | 配对不合理 | 训练效果差 | 难度分级 / 渐进训练 |
 
@@ -678,17 +717,21 @@ pvtt-training-dataset/
 
 ### 论文
 
-| 论文 | 用途 | 链接 |
-|------|------|------|
-| **VideoAnyDoor** | 视频物体插入 | [arxiv](https://arxiv.org/abs/2501.01427) / [分析](papers/videoanydoor-analysis.md) |
-| **SAM2** | 视频分割 | [arxiv](https://arxiv.org/abs/2408.00714) / [分析](papers/sam2-analysis.md) |
-| **ProPainter** | 视频修复 | [arxiv](https://arxiv.org/abs/2309.03897) / [分析](papers/propainter-analysis.md) |
+| 论文 | 用途 | 发表 | 链接 |
+|------|------|------|------|
+| **VideoPainter** | 视频修复 | SIGGRAPH 2025 | [GitHub](https://github.com/TencentARC/VideoPainter) |
+| **VideoAnyDoor** | 视频物体插入 | SIGGRAPH 2025 | [GitHub](https://github.com/yuanpengtu/VideoAnydoor) / [分析](papers/videoanydoor-analysis.md) |
+| **InsertAnywhere** | 视频物体插入 | arXiv Dec 2025 | [GitHub](https://github.com/myyzzzoooo/InsertAnywhere) / [论文](https://arxiv.org/abs/2512.17504) |
+| **SAM2** | 视频分割 | Meta 2024 | [GitHub](https://github.com/facebookresearch/segment-anything-2) / [分析](papers/sam2-analysis.md) |
+| **ProPainter** | 视频修复 (备选) | ICCV 2023 | [GitHub](https://github.com/sczhou/ProPainter) / [分析](papers/propainter-analysis.md) |
 
 ### 代码仓库
 
 - [PySceneDetect](https://github.com/Breakthrough/PySceneDetect) - 镜头切分
-- [SAM2](https://github.com/facebookresearch/segment-anything-2) - Meta
-- [ProPainter](https://github.com/sczhou/ProPainter) - Video Inpainting
+- [SAM2](https://github.com/facebookresearch/segment-anything-2) - 视频分割
+- [VideoPainter](https://github.com/TencentARC/VideoPainter) - 视频修复 (推荐)
+- [VideoAnyDoor](https://github.com/yuanpengtu/VideoAnydoor) - 视频物体插入
+- [InsertAnywhere](https://github.com/myyzzzoooo/InsertAnywhere) - 视频物体插入 (备选)
 - [rembg](https://github.com/danielgatis/rembg) - 图像去背景
 
 ### 内部文档
