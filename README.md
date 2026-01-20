@@ -19,11 +19,11 @@ PVTT (Product Video Template Transfer) 研究项目的技术调研与方案设�
 
 ```
 Pipeline:
-模板视频 → SAM2 分割 → ProPainter 修复 → 干净背景
-                ↓                              ↓
-            Box 序列 ─────────────────→ VideoAnyDoor → 合成视频
-                                              ↑
-新商品图 ──────────────────────────────────────┘
+模板视频 → 镜头切分 → 单镜头片段 → SAM2 分割 → ProPainter 修复 → 干净背景
+                                       ↓                              ↓
+                                   Box 序列 ───────────────→ VideoAnyDoor → 合成视频
+                                                                   ↑
+新商品图 (N张) ────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -95,10 +95,27 @@ video-editing-datasets/
 
 ---
 
+## 数据规模
+
+| 原始数据 | 数量 | 处理后 |
+|----------|------|--------|
+| 商品数 | 53 | - |
+| 视频 | 53 | ~200 片段 (镜头切分) |
+| 商品图片 | ~265 张 | 每商品 3-8 张 |
+
+**配对数量** (交叉配对):
+| 策略 | 配对数 | GPU-hours |
+|------|--------|-----------|
+| 单图 | ~10,400 | ~200 |
+| 采样 (2张/商品) | ~20,800 | ~410 |
+| 全图 | ~52,000 | ~1,000 |
+
+---
+
 ## 相关资源
 
 - **PVTT Benchmark**: [github.com/global-optima-research/pvtt](https://github.com/global-optima-research/pvtt)
-- **数据来源**: Etsy 商品视频 (53 samples, 11 categories)
+- **数据来源**: Etsy 商品视频 (53 products, 11 categories)
 
 ---
 
