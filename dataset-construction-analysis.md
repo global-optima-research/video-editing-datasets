@@ -218,12 +218,89 @@ PVTT 核心任务: **替换模板视频中的商品 (Object Replacement / Subjec
 5. GPT-4o / Gemini 过滤质量
 ```
 
+### 核心技术: 动态信息保持
+
+Image Edit + I2V 范式的核心挑战是如何保持原视频的动态信息（镜头移动、光影变化等）。
+
+#### 方法 1: Motion LoRA (I2VEdit - SIGGRAPH Asia 2024)
+
+```
+源视频 → 在 I2V 模型的时序注意力层训练 LoRA → 捕获运动模式
+                    ↓
+编辑后首帧 → 使用 Motion LoRA 的 I2V 模型 → 保持原运动的编辑视频
+```
+
+**原理**: 视频扩散模型中，时序注意力 (Temporal Attention) 负责帧间运动建模，空间注意力负责外观。通过在时序注意力层微调 LoRA，可以"学习"源视频的运动模式。
+
+**成本**: 单个视频片段约 10 分钟 (A100 GPU, 250 iterations)
+
+#### 方法 2: 光流引导 (FlowV2V, Motion-I2V)
+
+```
+源视频 → RAFT 提取光流 → 作为条件输入 I2V 模型
+                              ↓
+编辑后首帧 ──────────────────→ 光流引导的视频生成
+```
+
+**原理**: 光流显式描述了像素级的运动轨迹，作为额外条件注入生成过程。
+
+**FlowV2V 的 Iterative Motion Propagation**:
+1. 从源视频提取光流
+2. 将原物体区域的运动传播到编辑后物体
+3. 迭代处理直到所有帧
+
+#### 方法 3: 内容编码器 (Adobe Generative Video Propagation - CVPR 2025)
+
+```
+源视频 → Selective Content Encoder → 保留未编辑区域的信息
+              ↓
+编辑后首帧 → I2V 模型 + 内容编码器条件 → 编辑视频
+```
+
+**原理**: 在 I2V 模型之上添加内容编码器，选择性地保留原视频中未被编辑的区域信息。
+
+#### 方法对比
+
+| 方法 | 运动来源 | 优点 | 缺点 |
+|------|----------|------|------|
+| Motion LoRA | 源视频微调 | 隐式学习复杂运动 | 每个视频需单独训练 |
+| 光流引导 | 显式光流 | 精确像素级控制 | 形状变化大时光流失效 |
+| 内容编码器 | 源视频特征 | 保持未编辑区域 | 需要额外编码器 |
+
+#### 参考论文
+
+- [I2VEdit](https://arxiv.org/abs/2405.16537) - SIGGRAPH Asia 2024
+- [FlowV2V](https://arxiv.org/html/2506.07713v1) - arXiv 2025
+- [Adobe Generative Video Propagation](https://research.adobe.com/news/generative-video-propagation-cvpr-2025/) - CVPR 2025
+- [LoRA-Edit](https://arxiv.org/abs/2506.10082) - arXiv 2025
+
 ### 关键挑战
 
 1. **商品边界精确分割** - 需要高质量 mask
 2. **替换后的视觉一致性** - 光照、阴影、反射
 3. **运动传播** - 商品运动轨迹保持
 4. **时序一致性** - 帧间无闪烁
+
+### PVTT 特定考虑
+
+商品替换场景的额外挑战：
+
+1. **商品形状可能变化** → 光流方法可能不适用
+2. **需要保持相机运动** → Motion LoRA 或内容编码器更合适
+3. **光影需要适配新商品** → 可能需要额外的光照估计模块
+
+**建议技术栈**:
+```
+源视频 ─┬→ Motion LoRA 提取运动
+        ├→ 深度图提取空间结构
+        └→ SAM2 分割商品区域
+              ↓
+首帧商品替换 (FLUX-Fill + ControlNet-Depth)
+              ↓
+Motion LoRA 引导的 I2V 生成
+              ↓
+光影后处理 (可选)
+```
 
 ### 起步路径
 
