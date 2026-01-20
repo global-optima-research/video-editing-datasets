@@ -252,6 +252,34 @@ predictor.add_new_points_or_box(..., box=box)
 2. 自动检测 bbox 并分割
 3. 效果与手动标注 Point+负样本 接近
 
+### 改进：使用最大 Bounding Box
+
+**问题**: 初始方案使用多个小框，漏掉了左上角的链条和磁扣部分。
+
+**解决**: 降低检测阈值，选择面积最大的 bbox 进行分割。
+
+| 检测框 | 置信度 | 面积 | 选择 |
+|--------|--------|------|------|
+| [291, 426, 778, 759] | 0.541 | 162,163 | |
+| **[189, 282, 969, 761]** | 0.353 | **373,280** | ✅ 最大 |
+| [540, 283, 967, 540] | 0.410 | 109,749 | |
+
+**改进后结果**:
+
+![grounded_sam2_largest_box](../results/sam2-segmentation/grounded_sam2_largest_box.jpg)
+
+**改进后 Mask**:
+
+![grounded_sam2_largest_mask](../results/sam2-segmentation/grounded_sam2_largest_mask.png)
+
+| 对比 | 多个小框 | 最大框 |
+|------|----------|--------|
+| 黑色手链 | ✅ | ✅ |
+| 银色手链 | ✅ | ✅ |
+| 左上链条+磁扣 | ❌ 漏掉 | ✅ 包含 |
+| 内部空白 | ✅ 排除 | ✅ 排除 |
+| Coverage | 4.5% | 5.6% |
+
 ### 待验证
 
 - [ ] 将 Grounded SAM 2 应用于视频（而非单帧）
@@ -282,5 +310,7 @@ predictor.add_new_points_or_box(..., box=box)
   - [mask_box_test.jpg](../results/sam2-segmentation/mask_box_test.jpg) - Box prompt 测试
   - [mask_frame0.png](../results/sam2-segmentation/mask_frame0.png) - 原始 Mask
   - [grounded_dino_detection_v2.jpg](../results/sam2-segmentation/grounded_dino_detection_v2.jpg) - Grounding DINO 检测
-  - [grounded_sam2_result.jpg](../results/sam2-segmentation/grounded_sam2_result.jpg) - Grounded SAM 2 分割结果
-  - [grounded_sam2_mask.png](../results/sam2-segmentation/grounded_sam2_mask.png) - Grounded SAM 2 原始 Mask
+  - [grounded_sam2_result.jpg](../results/sam2-segmentation/grounded_sam2_result.jpg) - Grounded SAM 2 分割结果（多框）
+  - [grounded_sam2_mask.png](../results/sam2-segmentation/grounded_sam2_mask.png) - Grounded SAM 2 原始 Mask（多框）
+  - [grounded_sam2_largest_box.jpg](../results/sam2-segmentation/grounded_sam2_largest_box.jpg) - Grounded SAM 2 最大框结果
+  - [grounded_sam2_largest_mask.png](../results/sam2-segmentation/grounded_sam2_largest_mask.png) - Grounded SAM 2 最大框 Mask
