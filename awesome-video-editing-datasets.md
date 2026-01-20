@@ -8,6 +8,7 @@ A curated list of public datasets and benchmarks for video editing research.
 
 - [Text/Instruction-Guided Video Editing](#textinstruction-guided-video-editing)
 - [Video Subject Swapping](#video-subject-swapping)
+- [Video Inpainting](#video-inpainting)
 - [Video Editing Quality Assessment](#video-editing-quality-assessment)
 - [Evaluation Metrics](#evaluation-metrics)
 
@@ -23,6 +24,8 @@ Datasets for text-driven and instruction-based video editing. TGVE uses source/t
 |---------|------|------------|------------|-------|
 | **VEditBench** | 420 videos | Varied | 6 tasks (insert/remove/swap/scene/motion/style) | ICLR 2025 |
 | **IVEBench** | 600 videos | ≥2K source | 8 categories, 35 subcategories | arXiv 2025.10 |
+| **FiVE-Bench** | 100 videos, 420 prompts | - | 6 fine-grained tasks | ICCV 2025 |
+| **RVEBenchmark** | 100 videos, 519 queries | - | Reasoning editing (3 levels) | arXiv 2025.11 |
 | **OpenVE-Bench** | - | 720P | 8 categories (SA + NSA edits) | arXiv 2025.12 |
 | LOVEU-TGVE-2024 | 200 videos | Varied (2s-48s) | Insert, Remove, Change, Scene, Motion, Style | CVPR 2024 |
 | LOVEU-TGVE-2023 | 76 videos | 480×480 | Style, Background, Object, Multiple | CVPR 2023 |
@@ -33,6 +36,8 @@ Datasets for text-driven and instruction-based video editing. TGVE uses source/t
 | Dataset | Size | Resolution | Venue |
 |---------|------|------------|-------|
 | **OpenVE-3M** | 3M+ triplets | 720P | arXiv 2025.12 |
+| **Señorita-2M** | 2M pairs | Varied | NeurIPS D&B 2025 |
+| **Ditto-1M** | 1M triplets | 1280×720, 101 frames | arXiv 2025.10 |
 | **InsViE-1M** | 1M triplets | High-res | ICCV 2025 |
 | VIVID-10M | 9.7M samples | - | arXiv 2024.11 |
 
@@ -69,6 +74,42 @@ Datasets for text-driven and instruction-based video editing. TGVE uses source/t
 - **Code**: [langmanbusi/InsViE](https://github.com/langmanbusi/insvie)
 - **Size**: 1M high-quality instruction-video editing triplets
 - **Pipeline**: Two-stage editing-filtering with GPT-4o quality control
+
+### Señorita-2M
+
+- **Paper**: [Señorita-2M: A High-Quality Instruction-based Dataset for General Video Editing by Video Specialists](https://arxiv.org/abs/2502.06734) (NeurIPS D&B 2025)
+- **Dataset**: [SENORITADATASET/Senorita](https://huggingface.co/datasets/SENORITADATASET/Senorita) (HuggingFace)
+- **Code**: [zibojia/SENORITA](https://github.com/zibojia/SENORITA)
+- **Website**: [senorita-2m-dataset.github.io](https://senorita-2m-dataset.github.io/)
+- **Size**: 2M video editing pairs, 18 subcategories in 2 classes
+- **Tasks**: Object removal/swap/addition, global/local stylization
+- **Pipeline**: 4 trained video editing experts (CogVideoX) + 14 existing task experts + filtering
+
+### Ditto-1M
+
+- **Paper**: [Ditto: Scaling Instruction-Based Video Editing with a High-Quality Synthetic Dataset](https://arxiv.org/abs/2510.15742) (arXiv Oct 2025)
+- **Dataset**: [QingyanBai/Ditto-1M](https://huggingface.co/datasets/QingyanBai/Ditto-1M) (HuggingFace)
+- **Code**: [EzioBy/Ditto](https://github.com/EzioBy/Ditto)
+- **Website**: [editto.net](https://editto.net/)
+- **Size**: 1M triplets (700K global + 300K local editing), 1280×720, 101 frames @ 20 FPS
+- **Categories**: Scenes (23%), Single-person (34%), Group activities (33%), Objects (10%)
+- **Cost**: 12,000 GPU-days to build
+
+### FiVE-Bench
+
+- **Paper**: [FiVE: A Fine-grained Video Editing Benchmark](https://arxiv.org/abs/2503.13684) (ICCV 2025)
+- **Dataset**: [LIMinghan/FiVE-Fine-Grained-Video-Editing-Benchmark](https://huggingface.co/datasets/LIMinghan/FiVE-Fine-Grained-Video-Editing-Benchmark) (HuggingFace)
+- **Code**: [MinghanLi/FiVE-Bench](https://github.com/MinghanLi/FiVE-Bench)
+- **Size**: 100 videos (74 DAVIS + 26 synthetic), 420 prompt pairs
+- **Tasks**: Object replacement (rigid/non-rigid), Color alteration, Material modification, Object addition/removal
+- **Metrics**: 15 metrics + FiVE-Acc (VLM-based success metric)
+
+### RVEBenchmark
+
+- **Paper**: [Text-Driven Reasoning Video Editing via Reinforcement Learning](https://arxiv.org/abs/2511.14100) (arXiv Nov 2025)
+- **Size**: 100 videos, 519 implicit queries
+- **Tasks**: 3 reasoning levels × 3 categories (semantic, spatial, temporal reasoning)
+- **Details**: First benchmark for reasoning-based video editing with implicit instructions
 
 ### LOVEU-TGVE-2023
 
@@ -129,6 +170,34 @@ Datasets specifically designed for replacing subjects/objects in videos while pr
 
 ---
 
+## Video Inpainting
+
+Datasets for video inpainting and object removal tasks.
+
+| Dataset | Size | Type | Venue |
+|---------|------|------|-------|
+| **VPData** | 390K+ clips | Training | SIGGRAPH 2025 |
+| **VPBench** | 100 videos | Evaluation | SIGGRAPH 2025 |
+| **ROVI** | 5,650 videos | Training + Eval | CVPR 2024 |
+
+### VPData / VPBench
+
+- **Paper**: [VideoPainter: Any-length Video Inpainting and Editing with Plug-and-Play Context Control](https://arxiv.org/abs/2503.05639) (SIGGRAPH 2025)
+- **Dataset**: [TencentARC/VPData](https://huggingface.co/datasets/TencentARC/VPData), [TencentARC/VPBench](https://huggingface.co/datasets/TencentARC/VPBench) (HuggingFace)
+- **Code**: [TencentARC/VideoPainter](https://github.com/TencentARC/VideoPainter)
+- **VPData**: 390K+ clips (866.7+ hours), largest video inpainting dataset with segmentation masks and dense captions
+- **VPBench**: 100 videos (6s standard) + 16 videos (30s+ long) for evaluation
+- **Affiliations**: Tencent ARC Lab, CUHK, U Tokyo, U Macau
+
+### ROVI Dataset
+
+- **Paper**: [Towards Language-Driven Video Inpainting via Multimodal Large Language Models](https://openaccess.thecvf.com/content/CVPR2024/papers/Wu_Towards_Language-Driven_Video_Inpainting_via_Multimodal_Large_Language_Models_CVPR_2024_paper.pdf) (CVPR 2024)
+- **Code**: [jianzongwu/Language-Driven-Video-Inpainting](https://github.com/jianzongwu/Language-Driven-Video-Inpainting)
+- **Size**: 5,650 videos, 9,091 inpainting results
+- **Details**: First dataset for language-guided video inpainting (LVI) and interactive video inpainting (IVI)
+
+---
+
 ## Video Editing Quality Assessment
 
 Benchmarks focused on evaluating the quality of edited videos.
@@ -165,12 +234,6 @@ Benchmarks focused on evaluating the quality of edited videos.
 - **Paper**: [TDVE-Assessor: Benchmarking and Evaluating the Quality of Text-Driven Video Editing](https://arxiv.org/html/2505.19535)
 - **Size**: 3,857 edited videos from 12 models, 8 editing categories
 - **Annotations**: 173,565 human ratings across 3 dimensions (quality, alignment, structural consistency)
-
-### FiVE (Fine-Grained Video Editing)
-
-- **Dataset**: [LIMinghan/FiVE-Fine-Grained-Video-Editing-Benchmark](https://huggingface.co/datasets/LIMinghan/FiVE-Fine-Grained-Video-Editing-Benchmark) (HuggingFace)
-- **Size**: 420 high-quality prompt pairs, 6 fine-grained editing tasks
-- **Details**: Structured captions by GPT-4o (object category, action, background, camera movement)
 
 ---
 
@@ -210,26 +273,33 @@ Most relevant datasets for the task of transferring product video templates:
 | ⭐⭐⭐⭐⭐ | VideoSwap Dataset | Subject swapping with motion preservation |
 | ⭐⭐⭐⭐⭐ | DreamSwapV-Benchmark | Mask-guided subject swapping evaluation |
 | ⭐⭐⭐⭐⭐ | VEditBench | Object Swap task, diverse video lengths |
-| ⭐⭐⭐⭐ | OpenVE-3M | Large-scale training data, Local Change category |
+| ⭐⭐⭐⭐⭐ | FiVE-Bench | Fine-grained object replacement evaluation |
+| ⭐⭐⭐⭐ | OpenVE-3M | Large-scale training (3M), Local Change category |
+| ⭐⭐⭐⭐ | Señorita-2M | Large-scale training (2M), object swap/removal |
+| ⭐⭐⭐⭐ | Ditto-1M | High-quality training (1M), local editing |
 | ⭐⭐⭐⭐ | LOVEU-TGVE-2024 | Object Change editing type |
 | ⭐⭐⭐ | IVEBench | Modern evaluation protocol with MLLM |
 | ⭐⭐⭐ | MIVE Dataset | Multi-instance editing |
 
-### 2025 Highlights
+### 2024-2025 Highlights
 
 ```
-Key 2025 Additions:
-
-Training Data:
+Training Data (Million-scale):
 ├── OpenVE-3M (3M+ triplets, 720P, ByteDance)
+├── Señorita-2M (2M pairs, NeurIPS D&B 2025)
+├── Ditto-1M (1M triplets, 1280×720)
 ├── InsViE-1M (1M triplets, ICCV 2025)
-└── VIVID-10M (9.7M samples)
+├── VIVID-10M (9.7M samples, local editing)
+└── VPData (390K clips, video inpainting, SIGGRAPH 2025)
 
-Evaluation:
+Evaluation Benchmarks:
 ├── VEditBench (420 videos, 6 tasks, ICLR 2025)
-├── IVEBench (600 videos, 12 metrics, arXiv 2025.10)
+├── IVEBench (600 videos, 12 metrics)
+├── FiVE-Bench (100 videos, fine-grained, ICCV 2025)
+├── RVEBenchmark (519 queries, reasoning editing)
 ├── EditBoard (9 metrics, AAAI 2025)
-└── TDVE-DB (3,857 videos, 173K human ratings)
+├── TDVE-DB (3,857 videos, 173K human ratings)
+└── VPBench (video inpainting, SIGGRAPH 2025)
 ```
 
 ### Gap Analysis
@@ -238,9 +308,9 @@ Evaluation:
 Current Gap: No public dataset specifically for product/e-commerce promotional videos.
 
 Recommendation:
-1. Use VideoSwap Dataset + VEditBench (Object Swap) as baseline comparison
-2. Train on OpenVE-3M (Local Change category)
-3. Adopt DreamSwapV + IVEBench metrics for evaluation
+1. Evaluation: VideoSwap + VEditBench + FiVE-Bench (Object Swap/Replacement)
+2. Training: OpenVE-3M / Señorita-2M / Ditto-1M (Local Change, Object Swap)
+3. Metrics: DreamSwapV + IVEBench + FiVE-Acc
 4. Build custom product video dataset from e-commerce platforms
 ```
 
