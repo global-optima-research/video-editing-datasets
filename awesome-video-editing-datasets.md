@@ -4,6 +4,8 @@
 
 A curated list of public datasets and benchmarks for video editing research.
 
+**Related**: [Dataset Construction Analysis](dataset-construction-analysis.md) - 数据集构建方法分析
+
 ## Contents
 
 - [Training Datasets](#training-datasets)
