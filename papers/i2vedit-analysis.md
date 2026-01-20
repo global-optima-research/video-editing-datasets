@@ -10,7 +10,7 @@
 
 ## 核心贡献
 
-1. **Motion LoRA**: 从源视频提取运动模式 → 详见 [motion-lora.md](motion-lora.md)
+1. **Motion LoRA**: 从源视频提取运动模式 → 详见 [motion-lora.md](../motion-lora.md)
 2. **Appearance Refinement**: 细粒度注意力匹配
 3. 支持任意图像编辑工具 (Photoshop, FLUX 等)
 4. 自适应保持: 根据编辑程度调整保持强度
@@ -229,7 +229,7 @@ video[smooth_mask] += α * noise  # α = 0.005
 
 ## 相关文档
 
-- [Motion LoRA 技术详解](motion-lora.md) - Motion LoRA 的完整技术分析
+- [Motion LoRA 技术详解](../motion-lora.md) - Motion LoRA 的完整技术分析
 
 ---
 

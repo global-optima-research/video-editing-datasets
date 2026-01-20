@@ -17,7 +17,8 @@
 | 论文 | 核心贡献 | 文档 |
 |------|----------|------|
 | **I2VEdit** | Motion LoRA + 注意力匹配 | [i2vedit-analysis.md](i2vedit-analysis.md) |
-| **Motion LoRA** | Temporal Attention 微调详解 | [motion-lora.md](motion-lora.md) |
+
+> Motion LoRA 技术详解见 [motion-lora.md](../motion-lora.md)
 
 ### 物体替换技术
 
@@ -80,14 +81,15 @@ Pipeline:
 ## 文档结构
 
 ```
-papers/
-├── paper-analysis.md          # 本文件 (索引)
-├── ditto-1m-analysis.md       # Ditto-1M 数据集构建
-├── i2vedit-analysis.md        # I2VEdit 运动保持
-├── motion-lora.md             # Motion LoRA 技术详解
-├── videoswap-analysis.md      # VideoSwap 语义点替换
-├── videoanydoor-analysis.md   # VideoAnyDoor 物体插入
-└── video-object-insertion.md  # Video Object Insertion 综合调研
+video-editing-datasets/
+├── motion-lora.md             # Motion LoRA 技术详解 (含 Wan2.1/2.2)
+└── papers/
+    ├── paper-analysis.md          # 本文件 (索引)
+    ├── ditto-1m-analysis.md       # Ditto-1M 数据集构建
+    ├── i2vedit-analysis.md        # I2VEdit 运动保持
+    ├── videoswap-analysis.md      # VideoSwap 语义点替换
+    ├── videoanydoor-analysis.md   # VideoAnyDoor 物体插入
+    └── video-object-insertion.md  # Video Object Insertion 综合调研
 ```
 
 ---
