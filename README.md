@@ -4,6 +4,8 @@ PVTT (Product Video Template Transfer) 研究项目的技术调研与方案设�
 
 目标: CVPR 2027
 
+> **工作方法**: 本 repo 使用 Claude Code 辅助调研，详见 [WORKFLOW.md](WORKFLOW.md) (4h 完成全部调研)
+
 ---
 
 ## 项目概览
