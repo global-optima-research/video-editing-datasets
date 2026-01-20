@@ -32,6 +32,10 @@
 | 分辨率 | 1280x1024 |
 | 帧格式 | JPEG (scene1_frames/) |
 
+**输入首帧**:
+
+![input_frame](../results/sam2-segmentation/input_frame.jpg)
+
 ---
 
 ## Point Prompts
@@ -60,14 +64,18 @@
 
 ### 分割效果
 
-**首帧 Mask 预览**:
+**Mask 叠加可视化** (红色区域为检测到的 mask):
 
-![mask_preview](mask_preview.png)
+![mask_overlay](../results/sam2-segmentation/mask_overlay.jpg)
+
+**原始 Mask** (白色为前景):
+
+![mask_frame0](../results/sam2-segmentation/mask_frame0.png)
 
 **观察**:
 - ✅ 成功检测到两个手链的环形结构
 - ✅ 手链主体轮廓清晰
-- ⚠️ 存在一些背景噪点（装饰物误检）
+- ⚠️ 存在一些背景噪点（玻璃碗、心形装饰、礼盒被误检）
 - ⚠️ 手链内部空洞未填充（只有边缘）
 
 ### 输出文件
@@ -139,4 +147,7 @@ for frame_idx, obj_ids, mask_logits in predictor.propagate_in_video(inference_st
 - 分割脚本: `5090:/data/xuhao/pvtt-pipeline-test/sam2_segment.py`
 - 输入帧: `5090:/data/xuhao/pvtt-pipeline-test/samples/scene1_frames/`
 - 输出 masks: `5090:/data/xuhao/pvtt-pipeline-test/samples/scene1_masks/`
-- Mask 预览: `samples/mask_preview.png`
+- 结果图片:
+  - [input_frame.jpg](../results/sam2-segmentation/input_frame.jpg) - 输入首帧
+  - [mask_overlay.jpg](../results/sam2-segmentation/mask_overlay.jpg) - Mask 叠加可视化
+  - [mask_frame0.png](../results/sam2-segmentation/mask_frame0.png) - 原始 Mask
