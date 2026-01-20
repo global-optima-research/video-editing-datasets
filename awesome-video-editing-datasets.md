@@ -27,6 +27,7 @@ Datasets for text-driven and instruction-based video editing. TGVE uses source/t
 | **FiVE-Bench** | 100 videos, 420 prompts | - | 6 fine-grained tasks | ICCV 2025 |
 | **RVEBenchmark** | 100 videos, 519 queries | - | Reasoning editing (3 levels) | arXiv 2025.11 |
 | **OpenVE-Bench** | - | 720P | 8 categories (SA + NSA edits) | arXiv 2025.12 |
+| **DAVIS-Edit** | 2 subsets | 480p | Text + Image based V2V editing | TCSVT 2025 |
 | LOVEU-TGVE-2024 | 200 videos | Varied (2s-48s) | Insert, Remove, Change, Scene, Motion, Style | CVPR 2024 |
 | LOVEU-TGVE-2023 | 76 videos | 480×480 | Style, Background, Object, Multiple | CVPR 2023 |
 | BalanceCC | 100 videos | - | Creative & Controllable | CVPR 2024 |
@@ -111,6 +112,15 @@ Datasets for text-driven and instruction-based video editing. TGVE uses source/t
 - **Tasks**: 3 reasoning levels × 3 categories (semantic, spatial, temporal reasoning)
 - **Details**: First benchmark for reasoning-based video editing with implicit instructions
 
+### DAVIS-Edit
+
+- **Paper**: [StableV2V: Stablizing Shape Consistency in Video-to-Video Editing](https://arxiv.org/abs/2411.11045) (TCSVT 2025)
+- **Dataset**: [AlonzoLeeeooo/DAVIS-Edit](https://huggingface.co/datasets/AlonzoLeeeooo/DAVIS-Edit) (HuggingFace)
+- **Code**: [AlonzoLeeeooo/StableV2V](https://github.com/AlonzoLeeeooo/StableV2V)
+- **Subsets**: DAVIS-Edit-S (similar shape), DAVIS-Edit-C (changing shape)
+- **Tasks**: Text-based and image-based video editing evaluation
+- **Details**: Built on DAVIS structure, addresses shape consistency in V2V editing
+
 ### LOVEU-TGVE-2023
 
 - **Paper**: [CVPR 2023 Text Guided Video Editing Competition](https://arxiv.org/abs/2310.16003)
@@ -178,6 +188,8 @@ Datasets for video inpainting and object removal tasks.
 |---------|------|------|-------|
 | **VPData** | 390K+ clips | Training | SIGGRAPH 2025 |
 | **VPBench** | 100 videos | Evaluation | SIGGRAPH 2025 |
+| **ROSE-Bench** | - | Eval (Side Effects) | NeurIPS 2025 |
+| **VDOR** | - | Object Removal | arXiv 2025.01 |
 | **ROVI** | 5,650 videos | Training + Eval | CVPR 2024 |
 
 ### VPData / VPBench
@@ -188,6 +200,21 @@ Datasets for video inpainting and object removal tasks.
 - **VPData**: 390K+ clips (866.7+ hours), largest video inpainting dataset with segmentation masks and dense captions
 - **VPBench**: 100 videos (6s standard) + 16 videos (30s+ long) for evaluation
 - **Affiliations**: Tencent ARC Lab, CUHK, U Tokyo, U Macau
+
+### ROSE-Bench
+
+- **Paper**: [ROSE: Remove Objects with Side Effects in Videos](https://arxiv.org/abs/2508.18633) (NeurIPS 2025)
+- **Dataset**: [Kunbyte/ROSE-Dataset](https://huggingface.co/datasets/Kunbyte/ROSE-Dataset) (HuggingFace)
+- **Code**: [Kunbyte-AI/ROSE](https://github.com/Kunbyte-AI/ROSE)
+- **Website**: [rose2025-inpaint.github.io](https://rose2025-inpaint.github.io/)
+- **Side Effects**: Shadows, Reflections, Light, Translucency, Mirror
+- **Details**: First benchmark for object removal with side effects, synthetic data via Unreal Engine
+
+### VDOR
+
+- **Paper**: [VDOR: A Video-based Dataset for Object Removal via Sequence Consistency](https://arxiv.org/abs/2501.07397) (arXiv Jan 2025)
+- **Details**: Video-based annotation pipeline for realistic illumination-aware object removal
+- **Features**: Triplets of (original frame, background without object, mask), captures realistic lighting/shadow variations
 
 ### ROVI Dataset
 
@@ -297,9 +324,11 @@ Evaluation Benchmarks:
 ├── IVEBench (600 videos, 12 metrics)
 ├── FiVE-Bench (100 videos, fine-grained, ICCV 2025)
 ├── RVEBenchmark (519 queries, reasoning editing)
+├── DAVIS-Edit (V2V shape consistency, TCSVT 2025)
 ├── EditBoard (9 metrics, AAAI 2025)
 ├── TDVE-DB (3,857 videos, 173K human ratings)
-└── VPBench (video inpainting, SIGGRAPH 2025)
+├── VPBench (video inpainting, SIGGRAPH 2025)
+└── ROSE-Bench (object removal side effects, NeurIPS 2025)
 ```
 
 ### Gap Analysis
