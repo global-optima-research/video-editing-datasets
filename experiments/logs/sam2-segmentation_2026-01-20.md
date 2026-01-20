@@ -141,32 +141,30 @@ predictor.add_new_points_or_box(..., box=box)
 
 ### 结果对比
 
-| Prompt 方式 | 内部空白区域 | 需要负样本 | 自动化难度 |
-|------------|-------------|-----------|-----------|
-| Point prompt | ❌ 包含 | 是 | 高（需手动调点） |
-| **Box prompt** | ✅ 排除 | 否 | **低（只需 bbox）** |
+| Prompt 方式 | 黑色手链 | 银色手链 | 内部排除 | 总体 |
+|------------|---------|---------|---------|------|
+| Point + 负样本 (v5) | ✅ 完整 | ✅ 完整 | ✅ | **最佳** |
+| Box prompt | ⚠️ 不完整 | ❌ 漏掉 | ✅ | 较差 |
 
-**Point prompt 结果** (包含内部):
+**Point prompt + 负样本 (v5)** - 完整分割:
 
-![point_prompt](../results/sam2-segmentation/mask_overlay_v4_reference.jpg)
+![point_v5](../results/sam2-segmentation/mask_overlay.jpg)
 
-**Box prompt 结果** (正确排除内部):
+**Box prompt** - 黑色不完整，银色漏掉:
 
 ![box_prompt](../results/sam2-segmentation/mask_box_test.jpg)
 
 ### 关键发现
 
-**Box prompt 对环形物体效果更好**：SAM2 能正确识别手链是"带状物体"而非"填充区域"。
+1. **Box prompt 不如预期**: 虽然能排除内部空白，但分割不完整
+2. **Point + 负样本仍是最佳**: 需要精心选择正负样本点位
+3. **自动化挑战**: 如何自动生成正确的正负样本点仍待解决
 
-### 自动化方案
+### 待探索的自动化方向
 
-```
-Grounding DINO ("bracelet") → bbox 坐标
-            ↓
-SAM2 (box prompt) → 正确的 mask
-```
-
-不需要手动指定正负样本点。
+1. Grounding DINO → bbox → SAM2 box prompt → **需要后处理补全**
+2. 交互式标注工具（人工标注首帧，自动传播）
+3. 基于轮廓检测自动生成负样本点
 
 ---
 
@@ -179,11 +177,17 @@ SAM2 (box prompt) → 正确的 mask
 3. 正样本 (label=1): 点在目标物体上
 4. 负样本 (label=0): 点在不想要的区域（如内部空白）
 
-### Box Prompt 最佳实践（自动化场景）
+### Box Prompt 局限性
 
-1. 使用检测模型（Grounding DINO）获取 bbox
-2. 直接用 box prompt，无需正负样本点
-3. 对环形物体效果优于 point prompt
+1. 分割可能不完整（漏掉部分区域）
+2. 需要每个物体单独的 bbox
+3. **不如 Point + 负样本方案可靠**
+
+### 自动化方向（待研究）
+
+1. 交互式标注：人工标注首帧 → SAM2 自动传播到后续帧
+2. Grounded SAM 2：文本 → 检测 → 分割（需测试效果）
+3. 轮廓分析：初始分割 → 检测环形 → 自动添加负样本点
 
 ---
 
