@@ -191,12 +191,82 @@ predictor.add_new_points_or_box(..., box=box)
 
 ---
 
+## Grounded SAM 2 自动化测试
+
+### 实验目的
+
+测试 Grounded SAM 2 (Grounding DINO + SAM2) 能否自动完成手链分割，避免手动标注坐标。
+
+### 方案架构
+
+```
+文本提示 "black bracelet. silver bracelet."
+        ↓
+   Grounding DINO (HuggingFace)
+        ↓
+   Bounding boxes
+        ↓
+   SAM2 Image Predictor (box prompt)
+        ↓
+   Segmentation masks
+```
+
+### 检测结果
+
+| 检测对象 | 置信度 | Bounding Box |
+|----------|--------|--------------|
+| black bracelet silver | 0.541 | [291, 426, 778, 759] |
+| silver bracelet | 0.410 | [540, 283, 967, 540] |
+
+**Grounding DINO 检测可视化**:
+
+![grounding_dino](../results/sam2-segmentation/grounded_dino_detection_v2.jpg)
+
+### 分割结果
+
+**Grounded SAM 2 mask 叠加**:
+
+![grounded_sam2_result](../results/sam2-segmentation/grounded_sam2_result.jpg)
+
+**原始 Mask**:
+
+![grounded_sam2_mask](../results/sam2-segmentation/grounded_sam2_mask.png)
+
+### 关键发现
+
+| 对比项 | 手动 Point+负样本 (v5) | 手动 Box prompt | Grounded SAM 2 |
+|--------|------------------------|-----------------|----------------|
+| 黑色手链 | ✅ 完整 | ⚠️ 不完整 | ✅ 完整 |
+| 银色手链 | ✅ 完整 | ❌ 漏掉 | ✅ 完整 |
+| 内部空白排除 | ✅ | ✅ | ✅ |
+| 自动化程度 | ❌ 需手动坐标 | ❌ 需手动坐标 | ✅ 仅需文本 |
+
+**惊喜发现**: SAM2ImagePredictor 的 box prompt 效果比 SAM2VideoPredictor 更好！
+- 自动排除了环形内部空白区域
+- 两个手链都被完整分割
+
+### 结论
+
+**Grounded SAM 2 是可行的自动化方案**：
+1. 只需提供文本描述 "black bracelet. silver bracelet."
+2. 自动检测 bbox 并分割
+3. 效果与手动标注 Point+负样本 接近
+
+### 待验证
+
+- [ ] 将 Grounded SAM 2 应用于视频（而非单帧）
+- [ ] 测试更多样本的泛化能力
+- [ ] 与手动标注结果进行 IoU 对比
+
+---
+
 ## 结论
 
 1. **SAM2 分割基本成功**，两个手链主体被正确识别
 2. **处理速度快**，184 帧仅需 11 秒
 3. **mask 质量可用**，但有改进空间
-4. **下一步**: 使用 VideoPainter 基于此 mask 进行视频修复
+4. **Grounded SAM 2 是可行的自动化方案**
+5. **下一步**: 使用 VideoPainter 基于此 mask 进行视频修复
 
 ---
 
@@ -211,3 +281,6 @@ predictor.add_new_points_or_box(..., box=box)
   - [mask_overlay_v4_reference.jpg](../results/sam2-segmentation/mask_overlay_v4_reference.jpg) - Point prompt 包含内部 (v4)
   - [mask_box_test.jpg](../results/sam2-segmentation/mask_box_test.jpg) - Box prompt 测试
   - [mask_frame0.png](../results/sam2-segmentation/mask_frame0.png) - 原始 Mask
+  - [grounded_dino_detection_v2.jpg](../results/sam2-segmentation/grounded_dino_detection_v2.jpg) - Grounding DINO 检测
+  - [grounded_sam2_result.jpg](../results/sam2-segmentation/grounded_sam2_result.jpg) - Grounded SAM 2 分割结果
+  - [grounded_sam2_mask.png](../results/sam2-segmentation/grounded_sam2_mask.png) - Grounded SAM 2 原始 Mask
