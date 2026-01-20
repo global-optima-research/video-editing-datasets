@@ -57,10 +57,35 @@
 
 ---
 
+## 实验记录
+
+| 日期 | 步骤 | 文件 | 状态 |
+|------|------|------|------|
+| 01-20 | 镜头切分 | [shot-detection_2026-01-20.md](shot-detection_2026-01-20.md) | ✅ 完成 |
+| 01-20 | SAM2 分割 | [sam2-segmentation_2026-01-20.md](sam2-segmentation_2026-01-20.md) | ✅ 完成 |
+| - | VideoPainter 修复 | - | ⏳ 待运行 |
+| - | VideoAnyDoor 插入 | - | ⏳ 待运行 |
+
+---
+
+## 镜头切分结果
+
+检测到 **3 个镜头**，平均时长 4.9s：
+
+| Scene | 时间范围 | 帧数 | 文件 |
+|-------|----------|------|------|
+| 1 | 00:00-07:67 | 184 | `source_video-Scene-001.mp4` |
+| 2 | 07:67-10:89 | 77 | `source_video-Scene-002.mp4` |
+| 3 | 10:89-14:81 | 94 | `source_video-Scene-003.mp4` |
+
+**Scene 1** 将作为主要测试用例。
+
+---
+
 ## 待运行
 
-- [ ] 安装 ffmpeg / opencv
-- [ ] 运行 PySceneDetect 镜头切分
-- [ ] 运行 SAM2 分割
+- [x] 安装 ffmpeg / opencv
+- [x] 运行 PySceneDetect 镜头切分
+- [x] 运行 SAM2 分割
 - [ ] 运行 VideoPainter 修复
 - [ ] 运行 VideoAnyDoor 插入
