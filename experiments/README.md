@@ -12,13 +12,15 @@ experiments/
 │   ├── sam2-segmentation_2026-01-20.md
 │   ├── propainter_2026-01-20.md
 │   ├── lama_2026-01-20.md
-│   └── flux_fill_2026-01-20.md
+│   ├── flux_fill_2026-01-20.md
+│   └── diffueraser_2026-01-20.md
 └── results/            # 实验产物（图片、视频等）
     ├── shot-detection/
     ├── sam2-segmentation/
     ├── propainter/
     ├── lama/
-    └── flux_fill/
+    ├── flux_fill/
+    └── diffueraser/
 ```
 
 ---
@@ -29,6 +31,7 @@ experiments/
 
 | 日期 | 主题 | 文件 | 关键结论 |
 |------|------|------|---------|
+| 01-20 | DiffuEraser 修复 | [diffueraser_2026-01-20.md](logs/diffueraser_2026-01-20.md) | 失败 (3/10) - 继承 ProPainter 光流局限性，阴影残留 |
 | 01-20 | FLUX Fill 修复 | [flux_fill_2026-01-20.md](logs/flux_fill_2026-01-20.md) | 质量好 (8/10) - 颜色还原优秀，但依赖 prompt 不适合自动化 |
 | 01-20 | LaMa 修复 | [lama_2026-01-20.md](logs/lama_2026-01-20.md) | 可用 (6/10) - 手链和阴影移除成功，但有轻微色差和闪烁 |
 | 01-20 | ProPainter 修复 | [propainter_2026-01-20.md](logs/propainter_2026-01-20.md) | 失败 (2/10) - 光流方法无法移除全程存在的物体阴影 |
@@ -46,6 +49,7 @@ Sample 001: Bracelet → Necklace
 ├── [x] ProPainter 修复 - 失败 (2/10, 光流方法不适用)
 ├── [x] LaMa 修复 - 可用 (6/10, 有轻微色差和闪烁)
 ├── [x] FLUX Fill 修复 - 质量好 (8/10, 但依赖 prompt 不适合自动化)
+├── [x] DiffuEraser 修复 - 失败 (3/10, 继承 ProPainter 局限性)
 ├── [ ] VideoPainter 修复 - 待测试 (需要 80GB GPU)
 ├── [ ] VideoAnyDoor 插入
 └── [ ] VLM 评估
@@ -72,4 +76,4 @@ Sample 001: Bracelet → Necklace
 
 ---
 
-Last updated: 2026-01-20
+Last updated: 2026-01-21
