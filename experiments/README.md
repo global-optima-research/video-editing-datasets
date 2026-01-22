@@ -33,7 +33,7 @@ experiments/
 
 | 日期 | 主题 | 文件 | 关键结论 |
 |------|------|------|---------|
-| 01-22 | OmniEraser 修复 | [omnieraser_2026-01-22.md](logs/omnieraser_2026-01-22.md) | **最佳 (9/10)** - 自动移除物体及阴影，适合自动化 pipeline |
+| 01-22 | OmniEraser 修复 | [omnieraser_2026-01-22.md](logs/omnieraser_2026-01-22.md) | 单帧优秀 (7/10) - 阴影移除成功，但视频闪烁明显 |
 | 01-20 | DiffuEraser 修复 | [diffueraser_2026-01-20.md](logs/diffueraser_2026-01-20.md) | 失败 (3/10) - 继承 ProPainter 光流局限性，阴影残留 |
 | 01-20 | FLUX Fill 修复 | [flux_fill_2026-01-20.md](logs/flux_fill_2026-01-20.md) | 质量好 (8/10) - 颜色还原优秀，但依赖 prompt 不适合自动化 |
 | 01-20 | LaMa 修复 | [lama_2026-01-20.md](logs/lama_2026-01-20.md) | 可用 (6/10) - 手链和阴影移除成功，但有轻微色差和闪烁 |
@@ -53,7 +53,7 @@ Sample 001: Bracelet → Necklace
 ├── [x] LaMa 修复 - 可用 (6/10, 有轻微色差和闪烁)
 ├── [x] FLUX Fill 修复 - 质量好 (8/10, 但依赖 prompt 不适合自动化)
 ├── [x] DiffuEraser 修复 - 失败 (3/10, 继承 ProPainter 局限性)
-├── [x] OmniEraser 修复 - 最佳 (9/10, 自动移除物体及阴影) ⭐
+├── [x] OmniEraser 修复 - 单帧优秀 (7/10, 阴影移除成功但视频闪烁)
 ├── [ ] VideoAnyDoor 插入
 └── [ ] VLM 评估
 ```
