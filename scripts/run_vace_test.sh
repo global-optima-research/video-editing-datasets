@@ -5,6 +5,11 @@
 set -e
 
 # ============================================
+# HuggingFace 镜像配置（解决国内服务器连接问题）
+# ============================================
+export HF_ENDPOINT=https://hf-mirror.com
+
+# ============================================
 # 配置
 # ============================================
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -82,6 +87,11 @@ mkdir -p "$OUTPUT_DIR"
 
 cd "$PROJECT_DIR"
 
+# 竖屏分辨率 (原视频 720x1280，9:16 比例)
+# Wan2.1 推荐分辨率：宽度需要能被 16 整除
+WIDTH=480
+HEIGHT=848  # 480 * 16 / 9 ≈ 853，取能被 16 整除的 848
+
 # Test 1: Inpainting only
 echo ""
 echo "--- Test 1: Inpainting (vace_video + vace_video_mask) ---"
@@ -91,6 +101,8 @@ python3 "$BASELINE_DIR/test_zero_shot.py" \
     --prompt "handmade yixing zisha teapot, red clay, product display, studio lighting" \
     --output_dir "$OUTPUT_DIR" \
     --test_case inpainting \
+    --height $HEIGHT \
+    --width $WIDTH \
     --num_frames 49 \
     --seed 42
 
@@ -102,6 +114,8 @@ python3 "$BASELINE_DIR/test_zero_shot.py" \
     --prompt "handmade yixing zisha teapot, red clay, product display, studio lighting" \
     --output_dir "$OUTPUT_DIR" \
     --test_case reference \
+    --height $HEIGHT \
+    --width $WIDTH \
     --num_frames 49 \
     --seed 42
 
@@ -116,6 +130,8 @@ python3 "$BASELINE_DIR/test_zero_shot.py" \
     --prompt "handmade yixing zisha teapot, red clay, product display, studio lighting" \
     --output_dir "$OUTPUT_DIR" \
     --test_case combined \
+    --height $HEIGHT \
+    --width $WIDTH \
     --num_frames 49 \
     --seed 42
 

@@ -35,25 +35,13 @@ def load_grounding_dino():
 
 def load_sam2():
     """加载 SAM2 模型"""
-    from sam2.build_sam import build_sam2
+    from sam2.build_sam import build_sam2_hf
     from sam2.sam2_image_predictor import SAM2ImagePredictor
 
-    print("Loading SAM2...")
-    # 根据实际路径调整
-    sam2_checkpoint = "checkpoints/sam2.1_hiera_large.pt"
-    model_cfg = "configs/sam2.1/sam2.1_hiera_l.yaml"
-
-    # 如果使用 HuggingFace 版本
-    try:
-        sam2_model = build_sam2(model_cfg, sam2_checkpoint)
-        predictor = SAM2ImagePredictor(sam2_model)
-    except Exception as e:
-        print(f"Error loading SAM2 from local checkpoint: {e}")
-        print("Trying HuggingFace version...")
-        from transformers import Sam2Processor, Sam2Model
-        sam2_processor = Sam2Processor.from_pretrained("facebook/sam2-hiera-large")
-        sam2_model = Sam2Model.from_pretrained("facebook/sam2-hiera-large")
-        return sam2_processor, sam2_model, "hf"
+    print("Loading SAM2 from HuggingFace...")
+    # 使用 sam2 库自带的 HuggingFace 加载方式
+    sam2_model = build_sam2_hf("facebook/sam2.1-hiera-large")
+    predictor = SAM2ImagePredictor(sam2_model)
 
     return predictor, None, "local"
 
@@ -84,17 +72,20 @@ def segment_with_sam2(predictor, image, boxes, device):
     if len(boxes) == 0:
         return None
 
+    # 转换到 CPU 进行计算
+    boxes_cpu = boxes.cpu()
+
     # 选择最大的 box（根据实验记录，最大框效果最好）
-    areas = [(box[2] - box[0]) * (box[3] - box[1]) for box in boxes]
+    areas = [(box[2] - box[0]) * (box[3] - box[1]) for box in boxes_cpu]
     largest_idx = np.argmax(areas)
-    largest_box = boxes[largest_idx]
+    largest_box = boxes_cpu[largest_idx]
 
     print(f"Using largest box: {largest_box.tolist()}, area: {areas[largest_idx]:.0f}")
 
     masks, scores, _ = predictor.predict(
         point_coords=None,
         point_labels=None,
-        box=largest_box.cpu().numpy(),
+        box=largest_box.numpy(),
         multimask_output=False
     )
 

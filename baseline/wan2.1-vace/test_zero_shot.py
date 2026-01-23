@@ -143,6 +143,8 @@ def load_masks(mask_path: Path, height=480, width=832, num_frames=None) -> list[
     加载 mask
     - 如果是目录：加载所有 mask 文件
     - 如果是单个文件：复制为 num_frames 个相同的 mask
+
+    Note: DiffSynth expects RGB masks, so we convert L to RGB
     """
     mask_path = Path(mask_path)
 
@@ -151,15 +153,41 @@ def load_masks(mask_path: Path, height=480, width=832, num_frames=None) -> list[
         mask_files = sorted(mask_path.glob("*.png")) + sorted(mask_path.glob("*.jpg"))
         if num_frames:
             mask_files = mask_files[:num_frames]
-        masks = [Image.open(f).convert("L").resize((width, height)) for f in mask_files]
+        # Convert L to RGB for DiffSynth compatibility
+        masks = [Image.open(f).convert("L").resize((width, height)).convert("RGB") for f in mask_files]
         print(f"Loaded {len(masks)} masks from directory")
     else:
         # 单个 mask 文件，复制为序列
-        single_mask = Image.open(mask_path).convert("L").resize((width, height))
+        single_mask = Image.open(mask_path).convert("L").resize((width, height)).convert("RGB")
         masks = [single_mask] * (num_frames or 49)
         print(f"Using single mask for all {len(masks)} frames")
 
     return masks
+
+
+def composite_with_mask(original_frames: list[Image.Image], generated_frames: list, masks: list[Image.Image]) -> list:
+    """
+    后处理：用 mask 合成最终视频
+    最终输出 = 原视频 × (1 - mask) + 生成视频 × mask
+
+    这样 mask 外的区域完全保持原视频不变
+    """
+    composited = []
+    for i, (orig, gen, mask) in enumerate(zip(original_frames, generated_frames, masks)):
+        # 确保尺寸一致
+        if isinstance(gen, Image.Image):
+            gen_img = gen
+        else:
+            gen_img = Image.fromarray(gen)
+
+        orig_resized = orig.resize(gen_img.size)
+        mask_resized = mask.convert("L").resize(gen_img.size)
+
+        # 合成：mask 白色区域用生成的，黑色区域用原图
+        composited_frame = Image.composite(gen_img, orig_resized, mask_resized)
+        composited.append(np.array(composited_frame))
+
+    return composited
 
 
 def test_inpainting(
@@ -196,6 +224,11 @@ def test_inpainting(
         seed=seed,
         tiled=True,
     )
+
+    # 后处理：用 mask 合成，确保 mask 外区域完全保持原视频
+    # 将 RGB mask 转回灰度用于合成
+    gray_masks = [m.convert("L") if m.mode == "RGB" else m for m in masks[:len(video_frames)]]
+    video = composite_with_mask(video_frames, video, gray_masks)
 
     save_video(video, str(output_path), fps=15, quality=5)
     print(f"Saved: {output_path}")
@@ -277,6 +310,10 @@ def test_combined(
         seed=seed,
         tiled=True,
     )
+
+    # 后处理：用 mask 合成，确保 mask 外区域完全保持原视频
+    gray_masks = [m.convert("L") if m.mode == "RGB" else m for m in masks[:len(video_frames)]]
+    video = composite_with_mask(video_frames, video, gray_masks)
 
     save_video(video, str(output_path), fps=15, quality=5)
     print(f"Saved: {output_path}")
