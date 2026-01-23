@@ -355,7 +355,7 @@ def compute_loss(model, batch):
 # config.yaml
 
 model:
-  base: "CogVideoX-5B-I2V"
+  base: "Wan2.1-I2V-14B"
   product_encoder:
     backbone: "dinov2_vitl14"
     num_tokens: 64
@@ -495,7 +495,7 @@ Day 1-2: ProductEncoder
 Day 3-4: DiT 修改
 ├── Cross Attention 注入
 ├── Gate 机制
-└── 与 CogVideoX 集成
+└── 与 Wan2.1 集成
 
 Day 5: 训练脚本
 ├── 数据加载
@@ -578,7 +578,7 @@ Day 4-5: 总结 & 决策
 
 ### 9.2 备选方案
 
-1. **如果 CogVideoX 不适合**：尝试 AnimateDiff / SVD
+1. **如果 Wan2.1 不适合**：尝试 CogVideoX / AnimateDiff
 2. **如果 DINOv2 不够**：尝试 CLIP / SigLIP
 3. **如果 Cross Attention 不够**：尝试 Controlnet 风格注入
 
@@ -592,12 +592,12 @@ Day 4-5: 总结 & 决策
 - [VideoAnyDoor](https://arxiv.org/abs/2501.01427) - SIGGRAPH 2025
 - [AnyDoor](https://arxiv.org/abs/2307.09481) - CVPR 2024
 - [IP-Adapter](https://arxiv.org/abs/2308.06721) - 图像特征注入
-- [CogVideoX](https://github.com/THUDM/CogVideo) - 视频生成基座
+- [Wan2.1](https://github.com/Wan-Video/Wan2.1) - 视频生成基座 (阿里通义万相)
 
 ### 代码
 
 - VideoPainter: https://github.com/TencentARC/VideoPainter
-- CogVideoX: https://github.com/THUDM/CogVideo
+- Wan2.1: https://github.com/Wan-Video/Wan2.1
 - DINOv2: https://github.com/facebookresearch/dinov2
 - SAM2: https://github.com/facebookresearch/sam2
 
