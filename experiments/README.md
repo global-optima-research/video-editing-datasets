@@ -10,6 +10,8 @@ experiments/
 ├── reports/            # 总结报告
 │   ├── pvtt-experiments-summary_2026-01-22.md
 │   └── pvtt-experiments-summary_2026-01-23.md
+├── plans/              # 实验方案（已验证/已放弃）
+│   └── wan_ti2v_2026-01-22.md
 ├── logs/               # 实验日志
 │   ├── shot-detection_2026-01-20.md
 │   ├── sam2-segmentation_2026-01-20.md
@@ -18,7 +20,6 @@ experiments/
 │   ├── flux_fill_2026-01-20.md
 │   ├── diffueraser_2026-01-20.md
 │   ├── omnieraser_2026-01-22.md
-│   ├── wan_ti2v_2026-01-22.md
 │   ├── pipeline_redesign_2026-01-23.md
 │   └── product_video_generator_2026-01-23.md
 └── results/            # 实验产物（图片、视频等）
@@ -42,7 +43,6 @@ experiments/
 |------|------|------|---------|
 | 01-23 | ProductVideoGenerator | [product_video_generator_2026-01-23.md](logs/product_video_generator_2026-01-23.md) | PoC 方案：多视角商品图片 + masked_video → 商品视频生成 |
 | 01-23 | Pipeline 重设计 | [pipeline_redesign_2026-01-23.md](logs/pipeline_redesign_2026-01-23.md) | 新方案：空镜视频 + 物体插入，绕过背景修复和运动迁移困境 |
-| 01-22 | Wan2.2 TI2V 测试 | [wan_ti2v_2026-01-22.md](logs/wan_ti2v_2026-01-22.md) | 失败 - 同 seed 不同首帧无法生成一致运动 |
 | 01-22 | OmniEraser 修复 | [omnieraser_2026-01-22.md](logs/omnieraser_2026-01-22.md) | 单帧优秀 (7/10) - 阴影移除成功，但视频闪烁明显 |
 | 01-20 | DiffuEraser 修复 | [diffueraser_2026-01-20.md](logs/diffueraser_2026-01-20.md) | 失败 (3/10) - 继承 ProPainter 光流局限性，阴影残留 |
 | 01-20 | FLUX Fill 修复 | [flux_fill_2026-01-20.md](logs/flux_fill_2026-01-20.md) | 质量好 (8/10) - 颜色还原优秀，但依赖 prompt 不适合自动化 |
@@ -50,6 +50,12 @@ experiments/
 | 01-20 | ProPainter 修复 | [propainter_2026-01-20.md](logs/propainter_2026-01-20.md) | 失败 (2/10) - 光流方法无法移除全程存在的物体阴影 |
 | 01-20 | SAM2 分割 | [sam2-segmentation_2026-01-20.md](logs/sam2-segmentation_2026-01-20.md) | 两个手链成功分割，30fps 处理速度 |
 | 01-20 | 镜头切分 | [shot-detection_2026-01-20.md](logs/shot-detection_2026-01-20.md) | 检测到 3 个镜头，Scene 1 (7.67s) 作为测试用例 |
+
+### 已放弃方案
+
+| 日期 | 主题 | 文件 | 结论 |
+|------|------|------|------|
+| 01-22 | Wan2.2 TI2V 运动迁移 | [wan_ti2v_2026-01-22.md](plans/wan_ti2v_2026-01-22.md) | ❌ 失败 - 运动由首帧决定，无法跨首帧迁移 |
 
 ---
 
