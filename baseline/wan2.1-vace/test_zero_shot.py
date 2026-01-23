@@ -112,11 +112,13 @@ def create_test_data(output_dir: Path, height=480, width=832, num_frames=49):
     return frames, mask_img, ref_img
 
 
-def load_video_frames(video_path: Path, height=480, width=832) -> list[Image.Image]:
+def load_video_frames(video_path: Path, height=480, width=832, limit=None) -> list[Image.Image]:
     """从目录或视频文件加载帧"""
     if video_path.is_dir():
         # 从目录加载帧
         frame_files = sorted(video_path.glob("*.png")) + sorted(video_path.glob("*.jpg"))
+        if limit:
+            frame_files = frame_files[:limit]
         frames = [Image.open(f).resize((width, height)) for f in frame_files]
     else:
         # 从视频文件加载
@@ -127,6 +129,8 @@ def load_video_frames(video_path: Path, height=480, width=832) -> list[Image.Ima
             ret, frame = cap.read()
             if not ret:
                 break
+            if limit and len(frames) >= limit:
+                break
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             frame = Image.fromarray(frame).resize((width, height))
             frames.append(frame)
@@ -134,10 +138,34 @@ def load_video_frames(video_path: Path, height=480, width=832) -> list[Image.Ima
     return frames
 
 
+def load_masks(mask_path: Path, height=480, width=832, num_frames=None) -> list[Image.Image]:
+    """
+    加载 mask
+    - 如果是目录：加载所有 mask 文件
+    - 如果是单个文件：复制为 num_frames 个相同的 mask
+    """
+    mask_path = Path(mask_path)
+
+    if mask_path.is_dir():
+        # 从目录加载 mask 序列
+        mask_files = sorted(mask_path.glob("*.png")) + sorted(mask_path.glob("*.jpg"))
+        if num_frames:
+            mask_files = mask_files[:num_frames]
+        masks = [Image.open(f).convert("L").resize((width, height)) for f in mask_files]
+        print(f"Loaded {len(masks)} masks from directory")
+    else:
+        # 单个 mask 文件，复制为序列
+        single_mask = Image.open(mask_path).convert("L").resize((width, height))
+        masks = [single_mask] * (num_frames or 49)
+        print(f"Using single mask for all {len(masks)} frames")
+
+    return masks
+
+
 def test_inpainting(
     pipe: WanVideoPipeline,
     video_frames: list[Image.Image],
-    mask: Image.Image,
+    masks: list[Image.Image],
     prompt: str,
     output_path: Path,
     seed: int = 42,
@@ -152,8 +180,10 @@ def test_inpainting(
     print("Test 1: Inpainting (vace_video + vace_video_mask)")
     print("="*60)
 
-    # 创建 mask 序列（每帧相同的 mask）
-    mask_frames = [mask] * len(video_frames)
+    # 确保 mask 数量与帧数一致
+    mask_frames = masks[:len(video_frames)]
+    if len(mask_frames) < len(video_frames):
+        mask_frames = mask_frames + [mask_frames[-1]] * (len(video_frames) - len(mask_frames))
 
     video = pipe(
         prompt=prompt,
@@ -211,7 +241,7 @@ def test_reference_only(
 def test_combined(
     pipe: WanVideoPipeline,
     video_frames: list[Image.Image],
-    mask: Image.Image,
+    masks: list[Image.Image],
     reference_image: Image.Image,
     prompt: str,
     output_path: Path,
@@ -230,8 +260,10 @@ def test_combined(
     print("="*60)
     print("This is the key test for ProductVideoGenerator!")
 
-    # 创建 mask 序列
-    mask_frames = [mask] * len(video_frames)
+    # 确保 mask 数量与帧数一致
+    mask_frames = masks[:len(video_frames)]
+    if len(mask_frames) < len(video_frames):
+        mask_frames = mask_frames + [mask_frames[-1]] * (len(video_frames) - len(mask_frames))
 
     video = pipe(
         prompt=prompt,
@@ -326,21 +358,48 @@ def main():
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # 加载或创建测试数据
-    if args.video_path and args.mask_path and args.reference_path:
+    if args.video_path or args.reference_path:
         print("Loading provided test data...")
-        video_frames = load_video_frames(Path(args.video_path), args.height, args.width)
-        mask = Image.open(args.mask_path).convert("L").resize((args.width, args.height))
-        reference = Image.open(args.reference_path).convert("RGB")
+
+        # 加载视频帧
+        if args.video_path:
+            video_frames = load_video_frames(
+                Path(args.video_path), args.height, args.width, limit=args.num_frames
+            )
+        else:
+            video_frames = None
+
+        # 加载 mask
+        if args.mask_path:
+            masks = load_masks(
+                Path(args.mask_path), args.height, args.width, num_frames=args.num_frames
+            )
+        else:
+            # 创建默认 mask（中心区域）
+            mask = np.zeros((args.height, args.width), dtype=np.uint8)
+            cy, cx = args.height // 2, args.width // 2
+            h_box, w_box = args.height // 3, args.width // 3
+            mask[cy - h_box//2:cy + h_box//2, cx - w_box//2:cx + w_box//2] = 255
+            masks = [Image.fromarray(mask)] * args.num_frames
+
+        # 加载参考图像
+        if args.reference_path:
+            reference = Image.open(args.reference_path).convert("RGB")
+        else:
+            reference = None
     else:
         print("No test data provided, creating synthetic test data...")
         test_data_dir = output_dir / "test_data"
-        video_frames, mask, reference = create_test_data(
+        video_frames, single_mask, reference = create_test_data(
             test_data_dir, args.height, args.width, args.num_frames
         )
+        masks = [single_mask] * args.num_frames
 
     # 限制帧数
-    video_frames = video_frames[:args.num_frames]
-    print(f"Video frames: {len(video_frames)}, Size: {video_frames[0].size}")
+    if video_frames:
+        video_frames = video_frames[:args.num_frames]
+        print(f"Video frames: {len(video_frames)}, Size: {video_frames[0].size}")
+    print(f"Masks: {len(masks)}")
 
     # 加载模型
     pipe = load_pipeline(device=args.device)
@@ -349,37 +408,46 @@ def main():
     results = {}
 
     if args.test_case in ["inpainting", "all"]:
-        results["inpainting"] = test_inpainting(
-            pipe=pipe,
-            video_frames=video_frames,
-            mask=mask,
-            prompt=args.prompt,
-            output_path=output_dir / "test1_inpainting.mp4",
-            seed=args.seed,
-        )
+        if video_frames is None:
+            print("Skipping inpainting test: no video frames provided")
+        else:
+            results["inpainting"] = test_inpainting(
+                pipe=pipe,
+                video_frames=video_frames,
+                masks=masks,
+                prompt=args.prompt,
+                output_path=output_dir / "test1_inpainting.mp4",
+                seed=args.seed,
+            )
 
     if args.test_case in ["reference", "all"]:
-        results["reference"] = test_reference_only(
-            pipe=pipe,
-            reference_image=reference,
-            prompt=args.prompt,
-            output_path=output_dir / "test2_reference.mp4",
-            height=args.height,
-            width=args.width,
-            num_frames=args.num_frames,
-            seed=args.seed,
-        )
+        if reference is None:
+            print("Skipping reference test: no reference image provided")
+        else:
+            results["reference"] = test_reference_only(
+                pipe=pipe,
+                reference_image=reference,
+                prompt=args.prompt,
+                output_path=output_dir / "test2_reference.mp4",
+                height=args.height,
+                width=args.width,
+                num_frames=args.num_frames,
+                seed=args.seed,
+            )
 
     if args.test_case in ["combined", "all"]:
-        results["combined"] = test_combined(
-            pipe=pipe,
-            video_frames=video_frames,
-            mask=mask,
-            reference_image=reference,
-            prompt=args.prompt,
-            output_path=output_dir / "test3_combined.mp4",
-            seed=args.seed,
-        )
+        if video_frames is None or reference is None:
+            print("Skipping combined test: need both video frames and reference image")
+        else:
+            results["combined"] = test_combined(
+                pipe=pipe,
+                video_frames=video_frames,
+                masks=masks,
+                reference_image=reference,
+                prompt=args.prompt,
+                output_path=output_dir / "test3_combined.mp4",
+                seed=args.seed,
+            )
 
     print("\n" + "="*60)
     print("All tests completed!")
