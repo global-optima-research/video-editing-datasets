@@ -5,6 +5,7 @@
 - **日期**: 2026-01-23
 - **目标**: 设计并验证"多视角商品图片 + masked_video → 商品视频"的生成方案
 - **背景**: 基于 VideoPainter 数据构造思路，设计 PVTT 数据集自动化生成方案
+- **基座模型**: Wan2.1-1.3B（PoC 阶段使用小模型快速验证，成功后迁移到 14B）
 
 ---
 
@@ -128,6 +129,23 @@ Step 5: 构建数据集
 ---
 
 ## 三、模型架构
+
+### 3.0 基座模型选择
+
+**PoC 阶段使用 Wan2.1-1.3B**：
+
+| | Wan2.1-1.3B | Wan2.1-14B |
+|---|---|---|
+| 显存需求 | ~8-12GB | ~32-40GB |
+| 训练速度 | 快 | 慢 |
+| 推理速度 | 快 | 慢 |
+| 生成质量 | 够用验证 | 更好 |
+| 适用阶段 | PoC | 生产 |
+
+**迁移策略**：
+```
+PoC (1.3B) → 验证成功 → 迁移到 14B → 正式训练
+```
 
 ### 3.1 整体架构
 
@@ -363,7 +381,7 @@ def compute_loss(model, batch):
 # config.yaml
 
 model:
-  base: "Wan2.1-I2V-14B"
+  base: "Wan2.1-1.3B"
   product_encoder:
     backbone: "wan2.1_image_encoder"  # 复用 Wan2.1 的 Image Encoder
     num_tokens: 64
