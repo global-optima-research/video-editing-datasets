@@ -7,6 +7,8 @@
 ```
 experiments/
 ├── README.md           # 本文件（实验索引）
+├── reports/            # 总结报告
+│   └── pvtt-experiments-summary_2026-01-22.md
 ├── logs/               # 实验日志
 │   ├── shot-detection_2026-01-20.md
 │   ├── sam2-segmentation_2026-01-20.md
@@ -14,7 +16,8 @@ experiments/
 │   ├── lama_2026-01-20.md
 │   ├── flux_fill_2026-01-20.md
 │   ├── diffueraser_2026-01-20.md
-│   └── omnieraser_2026-01-22.md
+│   ├── omnieraser_2026-01-22.md
+│   └── wan_ti2v_2026-01-22.md
 └── results/            # 实验产物（图片、视频等）
     ├── shot-detection/
     ├── sam2-segmentation/
@@ -22,7 +25,8 @@ experiments/
     ├── lama/
     ├── flux_fill/
     ├── diffueraser/
-    └── omnieraser/
+    ├── omnieraser/
+    └── wan_ti2v/
 ```
 
 ---
@@ -33,6 +37,7 @@ experiments/
 
 | 日期 | 主题 | 文件 | 关键结论 |
 |------|------|------|---------|
+| 01-22 | Wan2.2 TI2V 测试 | [wan_ti2v_2026-01-22.md](logs/wan_ti2v_2026-01-22.md) | 失败 - 同 seed 不同首帧无法生成一致运动 |
 | 01-22 | OmniEraser 修复 | [omnieraser_2026-01-22.md](logs/omnieraser_2026-01-22.md) | 单帧优秀 (7/10) - 阴影移除成功，但视频闪烁明显 |
 | 01-20 | DiffuEraser 修复 | [diffueraser_2026-01-20.md](logs/diffueraser_2026-01-20.md) | 失败 (3/10) - 继承 ProPainter 光流局限性，阴影残留 |
 | 01-20 | FLUX Fill 修复 | [flux_fill_2026-01-20.md](logs/flux_fill_2026-01-20.md) | 质量好 (8/10) - 颜色还原优秀，但依赖 prompt 不适合自动化 |
