@@ -139,8 +139,8 @@ Step 5: 构建数据集
 │  ┌─────────────────────────────────────────────────────────────┐ │
 │  │                  Product Encoder                             │ │
 │  │                                                               │ │
-│  │   product_images ──→ DINOv2 ──→ image_tokens (N×257×1024)   │ │
-│  │        (N张)           │                                     │ │
+│  │   product_images ──→ Wan2.1 Image Encoder ──→ image_tokens  │ │
+│  │        (N张)              (复用，冻结)            (N×L×D)    │ │
 │  │                        ↓                                     │ │
 │  │              Multi-Image Attention                           │ │
 │  │                        ↓                                     │ │
@@ -176,17 +176,21 @@ Step 5: 构建数据集
 
 **目标**：从多张商品图片中提取紧凑的商品表示
 
+**设计原则**：复用 Wan2.1 已有的 Image Encoder，只新增多图融合模块
+
 ```python
 class ProductEncoder(nn.Module):
     """
     输入: N张商品图片 (B, N, 3, 512, 512)
     输出: product_embedding (B, K, D)
-    """
-    def __init__(self, num_tokens=64, hidden_dim=1024):
-        self.image_encoder = DINOv2()  # 冻结
-        self.image_proj = nn.Linear(1024, hidden_dim)
 
-        # 可学习的 query tokens
+    复用 Wan2.1 的 Image Encoder，不引入额外的 DINOv2
+    """
+    def __init__(self, wan_image_encoder, num_tokens=64, hidden_dim=1024):
+        # 复用 Wan2.1 的 Image Encoder（冻结）
+        self.image_encoder = wan_image_encoder
+
+        # 可学习的 query tokens（用于聚合多张图片信息）
         self.query_tokens = nn.Parameter(torch.randn(num_tokens, hidden_dim))
 
         # Multi-Image Attention: 融合多张图片
@@ -197,23 +201,27 @@ class ProductEncoder(nn.Module):
         # images: (B, N, 3, H, W)
         B, N = images.shape[:2]
 
-        # 提取每张图片特征
+        # 用 Wan2.1 的编码器提取每张图片特征
         image_tokens = []
         for i in range(N):
-            tokens = self.image_encoder(images[:, i])  # (B, 257, 1024)
-            tokens = self.image_proj(tokens)           # (B, 257, D)
+            tokens = self.image_encoder(images[:, i])  # (B, L, D)
             image_tokens.append(tokens)
 
         # 拼接所有图片 tokens
-        all_tokens = torch.cat(image_tokens, dim=1)  # (B, N*257, D)
+        all_tokens = torch.cat(image_tokens, dim=1)  # (B, N*L, D)
 
-        # 用 query tokens 聚合信息
+        # 用 query tokens 聚合多图信息
         queries = self.query_tokens.unsqueeze(0).expand(B, -1, -1)  # (B, K, D)
         output, _ = self.cross_attn(queries, all_tokens, all_tokens)
         output = self.norm(output + queries)
 
         return output  # (B, K, D) - 商品的紧凑表示
 ```
+
+**优势**：
+- 不引入额外的大模型（DINOv2 ~300M 参数）
+- 特征空间与 Wan2.1 一致，更容易融合
+- 只需训练轻量级的多图融合模块
 
 ### 3.3 DiT 条件注入
 
@@ -301,12 +309,12 @@ stage1:
   frozen:
     - vae
     - dit.blocks.*  # 冻结所有 DiT 原有参数
-    - product_encoder.image_encoder  # 冻结 DINOv2
+    - product_encoder.image_encoder  # 冻结 Wan2.1 Image Encoder
 
   trainable:
-    - product_encoder.image_proj
     - product_encoder.query_tokens
     - product_encoder.cross_attn
+    - product_encoder.norm
     - dit.blocks.*.product_cross_attn  # 只训练新增的 cross attention
     - dit.blocks.*.product_gate
 ```
@@ -324,7 +332,7 @@ stage2:
     - product_encoder.image_encoder
 
   trainable:
-    - product_encoder.*  # 除了 DINOv2
+    - product_encoder.*  # 除了 image_encoder
     - dit.blocks.*       # 全部 DiT
 ```
 
@@ -357,7 +365,7 @@ def compute_loss(model, batch):
 model:
   base: "Wan2.1-I2V-14B"
   product_encoder:
-    backbone: "dinov2_vitl14"
+    backbone: "wan2.1_image_encoder"  # 复用 Wan2.1 的 Image Encoder
     num_tokens: 64
     hidden_dim: 1024
     freeze_backbone: true
@@ -488,7 +496,7 @@ Day 5: 数据集构建
 
 ```
 Day 1-2: ProductEncoder
-├── DINOv2 集成
+├── 复用 Wan2.1 Image Encoder
 ├── Multi-Image Attention
 └── 单元测试
 
@@ -579,7 +587,7 @@ Day 4-5: 总结 & 决策
 ### 9.2 备选方案
 
 1. **如果 Wan2.1 不适合**：尝试 CogVideoX / AnimateDiff
-2. **如果 DINOv2 不够**：尝试 CLIP / SigLIP
+2. **如果 Wan2.1 Image Encoder 不够**：尝试额外加 DINOv2 / CLIP
 3. **如果 Cross Attention 不够**：尝试 Controlnet 风格注入
 
 ---
@@ -598,7 +606,6 @@ Day 4-5: 总结 & 决策
 
 - VideoPainter: https://github.com/TencentARC/VideoPainter
 - Wan2.1: https://github.com/Wan-Video/Wan2.1
-- DINOv2: https://github.com/facebookresearch/dinov2
 - SAM2: https://github.com/facebookresearch/sam2
 
 ---
