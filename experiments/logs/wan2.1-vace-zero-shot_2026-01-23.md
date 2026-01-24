@@ -92,6 +92,8 @@ video = pipe(
 
 **结果**: ❌ 仍然生成茶壶！参考图像被完全忽略。
 
+**对比可视化**：虽然提供了完全不同的参考图（黄色橡皮鸭），生成结果仍然是茶壶，证明在 combined 模式下参考图像没有被使用。
+
 ### 原因分析
 
 当同时提供 `vace_video` 和 `vace_reference_image` 时：
@@ -113,15 +115,28 @@ experiments/results/wan2.1-vace/
 ├── test2_reference.mp4         # 参考图像引导生成（茶壶）
 ├── test3_combined.mp4          # 组合测试（茶壶）
 ├── test_ref_only_duck.mp4      # 纯参考图生成（鸭子）✅
+├── test4_rubber_duck.mp4       # 组合测试（鸭子参考图）
 ├── test5_rubber_duck_fixed.mp4 # 组合测试（仍是茶壶）❌
-├── comparison_all.mp4          # 2×2 对比视频
+├── test_zeroed_reactive.mp4    # 清零 reactive 流测试
 ├── mask_visualization.mp4      # Mask 可视化
+├── comparison_all.mp4          # 2×2 对比视频（初始三个测试）
+├── comparison_inpainting.mp4   # 并排对比：原视频 vs Inpainting
+├── comparison_reference.mp4    # 并排对比：原视频 vs Reference-only
+├── comparison_combined.mp4     # 并排对比：原视频 vs Combined
+├── comparison_zeroed_reactive_v2.mp4  # 三列对比：原视频 vs 参考图 vs 清零结果
 └── images/
     ├── comparison_frame_25.jpg
     ├── mask_frame_25.jpg
     ├── ref_only_duck_frame_25.jpg
     └── rubber_duck_fixed_frame_25.jpg
 ```
+
+**对比视频说明**：
+- `comparison_all.mp4` (1.5M) - 2×2 网格对比初始三个测试用例
+- `comparison_inpainting.mp4` (677K) - 并排展示 inpainting 效果
+- `comparison_reference.mp4` (538K) - 并排展示 reference-only 生成
+- `comparison_combined.mp4` (682K) - 并排展示 combined 模式
+- `comparison_zeroed_reactive_v2.mp4` (757K) - 三列对比清零实验（左：原视频，中：参考图，右：生成结果）
 
 ### 效果评估
 
@@ -131,6 +146,13 @@ experiments/results/wan2.1-vace/
 | Reference-only (鸭子参考图) | ✅ | 生成鸭子视频 |
 | Combined (茶壶参考图 + 茶壶视频) | ⚠️ 看似有效 | 实际是重建原视频 |
 | Combined (鸭子参考图 + 茶壶视频) | ❌ | 仍然生成茶壶 |
+
+**对比视频**：
+- 初始测试对比：`comparison_all.mp4` - 2×2 网格展示三个测试用例
+- 各测试单独对比：
+  - `comparison_inpainting.mp4` - Inpainting 效果
+  - `comparison_reference.mp4` - Reference-only 生成
+  - `comparison_combined.mp4` - Combined 模式（看似有效但实际重建原视频）
 
 ## 结论
 
@@ -173,12 +195,19 @@ frame_zeroed[mask > 127] = 0  # 茶壶区域变黑
 
 ![Zeroed Reactive Result](../results/wan2.1-vace/test_zeroed_reactive_frame25.jpg)
 
-对比视频：`comparison_zeroed_reactive_v2.mp4`（左：原视频，中：参考图，右：生成结果）
+**对比视频**：`comparison_zeroed_reactive_v2.mp4`
+
+三列对比展示（左：原视频，中：参考图，右：生成结果）：
+- 左侧：原始茶壶视频，展示旋转动作
+- 中间：黄色橡皮鸭参考图（静态）
+- 右侧：清零 reactive 流后的生成结果
 
 **部分成功**：
 - ✅ 生成了黄色鸭子（参考图颜色/纹理生效）
 - ❌ 形状仍是茶壶轮廓（mask 形状主导）
 - ❌ 缺少旋转动作（原视频的运动信息丢失）
+
+**关键观察**：清零 reactive 流后，参考图像确实被使用了（黄色纹理出现），但生成结果是"静态的、茶壶形状的鸭子"，验证了 reactive 流承载运动信息的假设。
 
 ### 分析
 
