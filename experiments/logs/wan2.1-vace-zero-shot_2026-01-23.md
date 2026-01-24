@@ -173,6 +173,8 @@ frame_zeroed[mask > 127] = 0  # 茶壶区域变黑
 
 ![Zeroed Reactive Result](../results/wan2.1-vace/test_zeroed_reactive_frame25.jpg)
 
+对比视频：`comparison_zeroed_reactive_v2.mp4`（左：原视频，中：参考图，右：生成结果）
+
 **部分成功**：
 - ✅ 生成了黄色鸭子（参考图颜色/纹理生效）
 - ❌ 形状仍是茶壶轮廓（mask 形状主导）
