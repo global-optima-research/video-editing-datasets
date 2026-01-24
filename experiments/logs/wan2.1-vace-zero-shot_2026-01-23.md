@@ -13,6 +13,12 @@
 - **Mask**: Grounded SAM 2 自动分割 (225帧)
 - **参考图像**: `ref_side.jpg` (茶壶侧面产品图)
 
+**茶壶参考图像**：
+
+![Teapot Reference](../../samples/teapot/reference_images/ref_side.jpg)
+
+紫砂壶侧面产品图，用于 Reference-only 和 Combined 测试
+
 ### 测试场景
 1. **Inpainting**: vace_video + vace_video_mask
 2. **Reference**: vace_reference_image only
@@ -92,7 +98,9 @@ video = pipe(
 
 **结果**: ❌ 仍然生成茶壶！参考图像被完全忽略。
 
-**对比可视化**：虽然提供了完全不同的参考图（黄色橡皮鸭），生成结果仍然是茶壶，证明在 combined 模式下参考图像没有被使用。
+![Combined Duck Test Result](../results/wan2.1-vace/images/rubber_duck_fixed_frame_25.jpg)
+
+**对比可视化**：虽然提供了完全不同的参考图（黄色橡皮鸭），生成结果仍然是茶壶，证明在 combined 模式下参考图像没有被使用。左侧仍然是紫砂壶的纹理和形状，而不是黄色橡皮鸭。
 
 ### 原因分析
 
@@ -146,6 +154,18 @@ experiments/results/wan2.1-vace/
 | Reference-only (鸭子参考图) | ✅ | 生成鸭子视频 |
 | Combined (茶壶参考图 + 茶壶视频) | ⚠️ 看似有效 | 实际是重建原视频 |
 | Combined (鸭子参考图 + 茶壶视频) | ❌ | 仍然生成茶壶 |
+
+**初始三个测试的对比结果（Frame 25）**：
+
+![Comparison All](../results/wan2.1-vace/images/comparison_frame_25.jpg)
+
+2×2 网格对比（从左上顺时针）：原视频、Inpainting、Reference-only、Combined
+
+**Mask 可视化**：
+
+![Mask Visualization](../results/wan2.1-vace/images/mask_frame_25.jpg)
+
+红色区域为分割的 mask 区域（茶壶）
 
 **对比视频**：
 - 初始测试对比：`comparison_all.mp4` - 2×2 网格展示三个测试用例
