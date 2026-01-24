@@ -154,11 +154,11 @@ def load_masks(mask_path: Path, height=480, width=832, num_frames=None) -> list[
         if num_frames:
             mask_files = mask_files[:num_frames]
         # Convert L to RGB for DiffSynth compatibility
-        masks = [Image.open(f).convert("L").resize((width, height)).convert("RGB") for f in mask_files]
+        masks = [Image.open(f).convert("L").resize((width, height), Image.NEAREST).convert("RGB") for f in mask_files]
         print(f"Loaded {len(masks)} masks from directory")
     else:
         # 单个 mask 文件，复制为序列
-        single_mask = Image.open(mask_path).convert("L").resize((width, height)).convert("RGB")
+        single_mask = Image.open(mask_path).convert("L").resize((width, height), Image.NEAREST).convert("RGB")
         masks = [single_mask] * (num_frames or 49)
         print(f"Using single mask for all {len(masks)} frames")
 

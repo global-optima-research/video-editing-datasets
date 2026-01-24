@@ -1,6 +1,6 @@
 # Wan2.1-VACE Zero-Shot 测试实验记录
 
-**日期**: 2026-01-23
+**日期**: 2026-01-23 ~ 2026-01-24
 **目标**: 验证 Wan2.1-VACE-1.3B 能否 zero-shot 完成 ProductVideoGenerator 任务
 
 ## 实验设置
@@ -26,10 +26,8 @@
 
 ## 关键发现
 
-### 1. DiffSynth-Studio VACE 实现问题
-VACE pipeline 没有自动做 mask 后处理合成。模型输出的是完整重新生成的视频，而不是只填充 mask 区域。
-
-**解决方案**: 在测试脚本中添加后处理:
+### 1. DiffSynth-Studio VACE 实现
+VACE pipeline 没有自动做 mask 后处理合成。需要手动添加后处理:
 ```python
 def composite_with_mask(original_frames, generated_frames, masks):
     """最终输出 = 原视频 × (1 - mask) + 生成视频 × mask"""
@@ -40,61 +38,132 @@ def composite_with_mask(original_frames, generated_frames, masks):
     return composited
 ```
 
-### 2. Mask 格式
-- DiffSynth 期望 RGB 格式的 mask，不是灰度图
-- 加载时需要 `.convert("RGB")`
+### 2. Mask 格式要求
+- DiffSynth 期望 RGB 格式的 mask
+- **关键**: resize 时必须使用 `Image.NEAREST` 插值保持二值化
+```python
+# 错误 - 会产生渐变值
+masks = [Image.open(f).resize((width, height)).convert("RGB") for f in mask_files]
 
-### 3. 分辨率
-- Wan2.1 对分辨率有要求，宽高需要能被 16 整除
-- 竖屏推荐: 480×848
+# 正确 - 保持二值 (0/255)
+masks = [Image.open(f).convert("L").resize((width, height), Image.NEAREST).convert("RGB") for f in mask_files]
+```
+
+### 3. VACE 架构理解 (来自论文)
+VACE 使用 **Concept Decoupling** 将输入拆分为两个流:
+- **Inactive**: `video × (1 - mask)` - 保留区域，mask 区域置 0
+- **Reactive**: `video × mask` - mask 区域，其他置 0
+
+当提供 `vace_reference_image` 时，参考图以全零 mask 拼接在帧序列开头。
+
+## 验证实验：参考图像替换测试
+
+### 实验设计
+用完全不同的物体（黄色橡皮鸭）作为参考图像，测试模型是否真的使用参考图像。
+
+![Rubber Duck Reference](../results/wan2.1-vace/images/ref_rubber_duck.png)
+
+### 测试结果
+
+#### Test A: Reference-only (只用参考图，无原视频)
+```python
+video = pipe(
+    prompt='yellow rubber duck toy floating in water',
+    vace_reference_image=duck_image,
+    # 不传 vace_video
+)
+```
+
+![Reference Only Result](../results/wan2.1-vace/images/ref_only_duck_frame_25.jpg)
+
+**结果**: ✅ 成功生成鸭子视频！参考图像引导有效。
+
+#### Test B: Combined (参考图 + 原视频 + Mask)
+```python
+video = pipe(
+    prompt='yellow rubber duck toy',
+    vace_video=teapot_video_frames,
+    vace_video_mask=masks,
+    vace_reference_image=duck_image,
+)
+```
+
+![Combined Result](../results/wan2.1-vace/raw_frame_25_fixed.jpg)
+
+**结果**: ❌ 仍然生成茶壶！参考图像被完全忽略。
+
+### 原因分析
+
+当同时提供 `vace_video` 和 `vace_reference_image` 时：
+1. **Reactive 流包含原始茶壶像素** - 这是模型"看到"的要填充的内容
+2. **模型优先重建 reactive 内容** - 而不是用参考图替换
+3. **参考图被作为"风格参考"而非"内容替换"**
+
+这是 VACE 的设计意图：
+- **Reference-to-video**: 从参考图生成全新视频 ✅
+- **MV2V (Masked Video-to-Video)**: 修复/重建视频中的区域 ✅
+- **组合使用**: video 流主导，reference 作为辅助风格引导 ⚠️
 
 ## 实验结果
 
 ### 输出文件
 ```
 experiments/results/wan2.1-vace/
-├── test1_inpainting.mp4    # 纯 inpainting
-├── test2_reference.mp4     # 参考图像引导生成
-├── test3_combined.mp4      # 组合测试 (关键)
-├── comparison_all.mp4      # 2×2 对比视频
-└── mask_visualization.mp4  # Mask 可视化
+├── test1_inpainting.mp4        # 纯 inpainting
+├── test2_reference.mp4         # 参考图像引导生成（茶壶）
+├── test3_combined.mp4          # 组合测试（茶壶）
+├── test_ref_only_duck.mp4      # 纯参考图生成（鸭子）✅
+├── test5_rubber_duck_fixed.mp4 # 组合测试（仍是茶壶）❌
+├── comparison_all.mp4          # 2×2 对比视频
+├── mask_visualization.mp4      # Mask 可视化
+└── images/
+    ├── comparison_frame_25.jpg
+    ├── mask_frame_25.jpg
+    ├── ref_only_duck_frame_25.jpg
+    └── rubber_duck_fixed_frame_25.jpg
 ```
-
-### 四路对比 (Original / Inpainting / Reference / Combined)
-
-![Comparison Frame](../results/wan2.1-vace/images/comparison_frame_25.jpg)
-
-*第25帧对比：左上-原视频，右上-Inpainting，左下-Reference，右下-Combined*
-
-### Mask 可视化
-
-![Mask Visualization](../results/wan2.1-vace/images/mask_frame_25.jpg)
-
-*Mask 覆盖区域（红色半透明）：茶壶被准确分割，手部保持不变*
 
 ### 效果评估
 
-| 测试 | Mask 外区域保持 | 茶壶生成质量 | 整体评价 |
-|------|----------------|-------------|---------|
-| Inpainting | ✓ (后处理后) | 形状保持，颜色略有变化 | 可用 |
-| Reference | N/A | 生成了新场景 | 不适用于 inpainting |
-| Combined | ✓ (后处理后) | 参考图像有一定引导作用 | 需要进一步验证 |
+| 测试场景 | 参考图是否生效 | 结果 |
+|---------|--------------|------|
+| Reference-only (茶壶参考图) | ✅ | 生成茶壶相关视频 |
+| Reference-only (鸭子参考图) | ✅ | 生成鸭子视频 |
+| Combined (茶壶参考图 + 茶壶视频) | ⚠️ 看似有效 | 实际是重建原视频 |
+| Combined (鸭子参考图 + 茶壶视频) | ❌ | 仍然生成茶壶 |
 
 ## 结论
 
-1. **Zero-shot 效果出色**: 添加 mask 后处理后，mask 外区域（手、背景）能完美保持原视频
-2. **Mask 分割准确**: Grounded SAM 2 对茶壶的分割非常精确，边缘干净
-3. **时序一致性完美**: 生成视频与原视频帧完全同步，无任何错位
-4. **Combined 模式可用**: 参考图像 + Mask + 原视频的组合方式达到预期效果
+### VACE Zero-Shot 能力评估
 
-## 下一步
+1. **Reference-to-video**: ✅ 功能正常，参考图有效引导生成
+2. **Video Inpainting (MV2V)**: ✅ 功能正常，能修复/重建视频区域
+3. **Reference-guided Object Replacement**: ❌ **不支持**
 
-1. 尝试调整 prompt 和参数优化生成质量
-2. 如果 zero-shot 效果不够好，考虑 LoRA 训练
-3. 测试更多样本验证泛化能力
+### 为什么初始实验"看起来完美"
+
+初始用茶壶参考图测试时，Combined 模式的输出看起来完美，是因为：
+- 模型重建了原视频中的茶壶（来自 reactive 流）
+- 参考图恰好也是茶壶，所以视觉上无法区分
+- Mask 后处理确保了手部等区域保持不变
+
+**这是一个典型的"测试设计缺陷"** - 用相同物体作为参考图无法验证参考图是否真正生效。
+
+### 对 ProductVideoGenerator 的影响
+
+**Zero-shot VACE 无法实现 ProductVideoGenerator 的核心需求**：用产品参考图替换视频中的物体。
+
+## 下一步方案
+
+1. **LoRA 训练**: 微调 VACE 增强 reference image 的条件注入强度
+2. **两阶段方案**:
+   - Stage 1: 用 reference-only 生成产品视频
+   - Stage 2: 用 ControlNet + 深度图/姿态 引导合成
+3. **其他模型**: 探索专门设计用于物体替换的模型（如 AnyDoor, Paint-by-Example 的视频版本）
 
 ## 相关文件
 
 - 测试脚本: `baseline/wan2.1-vace/test_zero_shot.py`
 - 运行脚本: `scripts/run_vace_test.sh`
 - 分割脚本: `samples/teapot/segment_teapot.py`
+- VACE 论文: [arXiv:2503.07598](https://arxiv.org/abs/2503.07598)
