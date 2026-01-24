@@ -153,13 +153,60 @@ experiments/results/wan2.1-vace/
 
 **Zero-shot VACE 无法实现 ProductVideoGenerator 的核心需求**：用产品参考图替换视频中的物体。
 
+## 追加实验：清零 Reactive 流
+
+### 实验设计
+
+既然 reactive 流（原始茶壶像素）主导了生成，尝试将其清零：
+
+```python
+# 把 mask 区域置黑，让 reactive 流为空
+frame_zeroed = frame.copy()
+frame_zeroed[mask > 127] = 0  # 茶壶区域变黑
+```
+
+这样：
+- Inactive 流：手 + 背景（茶壶位置是黑色）
+- Reactive 流：全黑（没有原始茶壶信息）
+
+### 结果
+
+![Zeroed Reactive Result](../results/wan2.1-vace/test_zeroed_reactive_frame25.jpg)
+
+**部分成功**：
+- ✅ 生成了黄色鸭子（参考图颜色/纹理生效）
+- ❌ 形状仍是茶壶轮廓（mask 形状主导）
+- ❌ 缺少旋转动作（原视频的运动信息丢失）
+
+### 分析
+
+清零 reactive 流后，模型确实开始使用参考图像，但：
+1. **Mask 形状成为强先验** - 生成的鸭子是"茶壶形状的鸭子"
+2. **运动信息丢失** - 原视频中茶壶的旋转动作没有被保留
+
+这说明 VACE 的设计是：
+- Reactive 流不仅提供内容，还提供**运动轨迹**
+- Mask 形状定义了生成区域的**轮廓约束**
+
+### 结论
+
+清零 reactive 流可以让参考图像生效，但会丢失原视频的运动信息，且生成形状受 mask 约束。
+
+要实现理想的物体替换，需要：
+1. 保留原视频的运动轨迹
+2. 用参考图像的内容替换
+3. 适应新物体的形状（而非强制使用原 mask 形状）
+
+这可能需要更复杂的方案，如深度/姿态引导 + 形状自适应。
+
 ## 下一步方案
 
-1. **LoRA 训练**: 微调 VACE 增强 reference image 的条件注入强度
+1. **LoRA 训练**: 微调 VACE 增强 reference image 的条件注入强度，同时保留运动信息
 2. **两阶段方案**:
    - Stage 1: 用 reference-only 生成产品视频
    - Stage 2: 用 ControlNet + 深度图/姿态 引导合成
-3. **其他模型**: 探索专门设计用于物体替换的模型（如 AnyDoor, Paint-by-Example 的视频版本）
+3. **运动迁移**: 提取原视频的运动轨迹，应用到参考图像生成
+4. **其他模型**: 探索专门设计用于物体替换的模型（如 AnyDoor, Paint-by-Example 的视频版本）
 
 ## 相关文件
 
