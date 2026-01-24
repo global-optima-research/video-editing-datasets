@@ -1,131 +1,79 @@
-# Video Editing Datasets Research
+# PVTT Training Pipeline
 
-PVTT (Product Video Template Transfer) 研究项目的技术调研与方案设计。
+> Training-based methods for Product Video Template Transfer (PVTT)
 
-目标: CVPR 2027
+## PVTT 任务定义
 
-> **工作方法**: 本 repo 使用 Claude Code 辅助调研，详见 [WORKFLOW.md](WORKFLOW.md) (4h 完成全部调研)
+**输入**：
+1. Template Video：一个成功的产品推广视频
+2. New Product Image(s)：新产品的图片（1-N张）
 
----
+**输出**：
+- 新产品的推广视频
+- 保持模板的视觉风格、运镜、节奏
 
-## 项目概览
+详细任务定义见 [pvtt-training-free](https://github.com/global-optima-research/pvtt-training-free)。
 
-```
-目标任务: 商品视频模板迁移
-├── 输入: 模板视频 (含商品 A) + 目标商品图 (商品 B)
-├── 输出: 编辑视频 (商品 A → 商品 B)
-└── 约束: 保持运动、光照、背景，支持形状变化 (手表→项链)
-```
+## 研究定位
 
-**核心发现**: 将 Video Editing 转化为 Video Object Insertion
+本项目专注于 **Training-based** 方法，与 [pvtt-training-free](https://github.com/global-optima-research/pvtt-training-free) 形成互补：
 
-```
-Pipeline:
-模板视频 → 镜头切分 → 单镜头片段 → SAM2 分割 → VideoPainter 修复 → 干净背景
-                                       ↓                               ↓
-                                   Box 序列 ────────────────→ VideoAnyDoor → 合成视频
-                                                              (或 InsertAnywhere)
-新商品图 (N张) ─────────────────────────────────────────────────────┘
-```
+| 项目 | 方法类型 | 代表方案 |
+|------|----------|----------|
+| pvtt-training-free | Training-Free | Flux.2 + TI2V, RF-Solver Inversion |
+| **pvtt-training-pipeline** | Training-Based | LoRA 微调, 数据集构建 |
 
----
+## 当前进展
 
-## 文档索引
+### Wan2.1-VACE Zero-Shot 实验
 
-### 核心文档
+测试 Wan2.1-VACE-1.3B 能否 zero-shot 完成 PVTT 任务。
 
-| 文档 | 说明 |
-|------|------|
-| [pvtt-dataset-proposal.md](pvtt-dataset-proposal.md) | PVTT 数据集构建技术方案 |
-| [dataset-construction-analysis.md](dataset-construction-analysis.md) | 数据集构建方法分析 |
-| [awesome-video-editing-datasets.md](awesome-video-editing-datasets.md) | 公开视频编辑数据集列表 |
-| [motion-lora.md](motion-lora.md) | Motion LoRA 技术详解 |
+**结论**：Zero-shot VACE 无法实现物体替换
 
-### 论文分析
+| 测试场景 | 结果 |
+|---------|------|
+| Reference-only | ✅ 参考图有效引导生成 |
+| Video Inpainting | ✅ 能修复/重建视频区域 |
+| **Reference + Video + Mask** | ❌ 参考图被忽略，重建原视频内容 |
+| Zeroed Reactive Stream | ⚠️ 参考图生效，但丢失运动信息 |
 
-详见 [papers/README.md](papers/README.md)
+详细实验记录：[experiments/logs/wan2.1-vace-zero-shot_2026-01-23.md](experiments/logs/wan2.1-vace-zero-shot_2026-01-23.md)
 
-| 类别 | 论文 |
-|------|------|
-| **数据集构建** | Ditto-1M |
-| **运动保持** | I2VEdit (Motion LoRA) |
-| **物体替换** | VideoSwap, VideoAnyDoor |
-| **Pipeline 组件** | SAM2, ProPainter |
+### 下一步方向
 
----
-
-## 快速对比
-
-### 运动保持方案
-
-| 方案 | 形状变化 | 自动化 | 成本 | 推荐 |
-|------|----------|--------|------|------|
-| 深度约束 (Ditto) | ❌ | ✅ 高 | ✅ 低 | - |
-| Motion LoRA (I2VEdit) | ⚠️ 有限 | ⚠️ 中 | ❌ 高 | - |
-| 语义点 (VideoSwap) | ✅ | ❌ 低 | ⚠️ 中 | - |
-| **Box 序列 (VideoAnyDoor)** | ✅ | ✅ 高 | ✅ 低 | **PVTT 首选** |
-
-### Pipeline 组件
-
-| 组件 | 作用 | 发表 | 代码 |
-|------|------|------|------|
-| SAM2 | 视频分割 | Meta 2024 | [GitHub](https://github.com/facebookresearch/segment-anything-2) |
-| **VideoPainter** | 视频修复 | SIGGRAPH 2025 | [GitHub](https://github.com/TencentARC/VideoPainter) |
-| **VideoAnyDoor** | 物体插入 | SIGGRAPH 2025 | [GitHub](https://github.com/yuanpengtu/VideoAnydoor) |
-| InsertAnywhere | 物体插入 (备选) | Dec 2025 | [GitHub](https://github.com/myyzzzoooo/InsertAnywhere) |
-
----
+1. **LoRA 训练**：微调 VACE 增强 reference image 条件注入
+2. **两阶段方案**：Reference-to-video + ControlNet 合成
+3. **运动迁移**：提取原视频运动轨迹，应用到参考图生成
+4. **其他模型**：探索 AnyDoor/Paint-by-Example 的视频版本
 
 ## 目录结构
 
 ```
-video-editing-datasets/
-├── README.md                          # 本文件
-├── pvtt-dataset-proposal.md           # PVTT 数据集技术方案
-├── dataset-construction-analysis.md   # 构建方法分析
-├── awesome-video-editing-datasets.md  # 公开数据集列表
-├── motion-lora.md                     # Motion LoRA 技术详解
-└── papers/
-    ├── README.md                      # 论文索引
-    ├── ditto-1m-analysis.md           # Ditto-1M 分析
-    ├── i2vedit-analysis.md            # I2VEdit 分析
-    ├── videoswap-analysis.md          # VideoSwap 分析
-    ├── videoanydoor-analysis.md       # VideoAnyDoor 分析
-    ├── video-object-insertion.md      # Video Object Insertion 综合调研
-    ├── sam2-analysis.md               # SAM2 分析
-    └── propainter-analysis.md         # ProPainter 分析
+pvtt-training-pipeline/
+├── baseline/
+│   └── wan2.1-vace/              # VACE baseline 测试
+├── samples/
+│   └── teapot/                   # 测试样本（紫砂壶）
+│       ├── video_frames/         # 原视频帧
+│       ├── masks/                # SAM2 分割 mask
+│       └── reference_images/     # 参考图像
+├── experiments/
+│   ├── logs/                     # 实验日志
+│   └── results/                  # 实验输出
+├── scripts/                      # 工具脚本
+└── papers/                       # 论文分析
 ```
 
----
+## 相关项目
 
-## 数据规模
+- [pvtt-training-free](https://github.com/global-optima-research/pvtt-training-free) - Training-free 方法
+- [pvtt](https://github.com/global-optima-research/pvtt) - PVTT Benchmark
 
-| 原始数据 | 数量 | 处理后 |
-|----------|------|--------|
-| 商品数 | 53 | - |
-| 视频 | 53 | ~200 片段 (镜头切分) |
-| 商品图片 | ~265 张 | 每商品 3-8 张 |
+## 目标会议
 
-**配对数量** (交叉配对):
-| 策略 | 配对数 | GPU-hours |
-|------|--------|-----------|
-| 单图 | ~10,400 | ~200 |
-| 采样 (2张/商品) | ~20,800 | ~410 |
-| 全图 | ~52,000 | ~1,000 |
+CVPR 2027
 
 ---
 
-## 相关资源
-
-- **PVTT Benchmark**: [github.com/global-optima-research/pvtt](https://github.com/global-optima-research/pvtt)
-- **数据来源**: Etsy 商品视频 (53 products, 11 categories)
-
----
-
-## License
-
-MIT
-
----
-
-Last updated: 2026-01-20
+Last updated: 2026-01-24
