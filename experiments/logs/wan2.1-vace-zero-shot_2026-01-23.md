@@ -215,7 +215,9 @@ frame_zeroed[mask > 127] = 0  # 茶壶区域变黑
 
 ![Zeroed Reactive Result](../results/wan2.1-vace/test_zeroed_reactive_frame25.jpg)
 
-**对比视频**：`comparison_zeroed_reactive_v2.mp4`
+**三列对比视频**：`comparison_zeroed_reactive_v2.mp4`
+
+![Comparison Zeroed Reactive](../results/wan2.1-vace/images/comparison_zeroed_reactive_v2_frame25.jpg)
 
 三列对比展示（左：原视频，中：参考图，右：生成结果）：
 - 左侧：原始茶壶视频，展示旋转动作
