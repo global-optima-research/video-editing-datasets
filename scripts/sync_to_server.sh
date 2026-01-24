@@ -5,7 +5,7 @@
 # 配置 - 根据实际情况修改
 # ============================================
 SERVER="5090"                    # SSH 别名或 user@host
-REMOTE_DIR="/data/xuhao/video-editing-datasets"
+REMOTE_DIR="/data/xuhao/pvtt-training-pipeline"
 
 # ============================================
 # 同步

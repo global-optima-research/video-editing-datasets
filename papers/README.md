@@ -100,7 +100,7 @@ Pipeline:
 ## 文档结构
 
 ```
-video-editing-datasets/
+pvtt-training-pipeline/
 ├── motion-lora.md             # Motion LoRA 技术详解 (含 Wan2.1/2.2)
 └── papers/
     ├── README.md                  # 本文件 (索引)

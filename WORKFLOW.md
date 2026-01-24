@@ -72,7 +72,7 @@ Human: 帮我调研 video editing datasets，整理成 awesome 列表
 3. 提取关键信息 (规模、任务、链接)
 4. 生成 Markdown 文档
 
-**产出示例**: [awesome-video-editing-datasets.md](awesome-video-editing-datasets.md)
+**产出示例**: [awesome-pvtt-training-pipeline.md](awesome-pvtt-training-pipeline.md)
 
 **耗时**: ~1.5 小时 (含多轮迭代优化结构)
 
@@ -183,7 +183,7 @@ CC 会自动更新所有相关部分 (数据规格、资源估算、Pipeline 等
 
 | 文件 | 类型 | 说明 |
 |------|------|------|
-| awesome-video-editing-datasets.md | 调研 | 领域数据集列表 |
+| awesome-pvtt-training-pipeline.md | 调研 | 领域数据集列表 |
 | dataset-construction-analysis.md | 调研 | 构建方法分析 |
 | motion-lora.md | 技术 | Motion LoRA 详解 |
 | papers/*.md (7篇) | 分析 | 论文深度分析 |
