@@ -170,7 +170,7 @@ def main():
     OUTPUT_DIR = PROJECT_DIR / "experiments/results/wan2.1-vace"
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    # 视频参数
+    # 视频参数（保持竖屏比例）
     WIDTH = 480
     HEIGHT = 848
     NUM_FRAMES = 49
