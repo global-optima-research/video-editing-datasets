@@ -128,26 +128,36 @@ def create_bbox_masks_from_precise(precise_masks, margin=10):
 
 def visualize_comparison(frame, precise_mask, bbox_mask, output_path):
     """可视化对比：原帧、精确 mask、bbox mask"""
-    import matplotlib.pyplot as plt
+    from PIL import ImageDraw, ImageFont
 
-    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+    # 创建横向拼接图
+    width = frame.width * 3
+    height = frame.height
+    combined = Image.new('RGB', (width, height))
 
-    axes[0].imshow(frame)
-    axes[0].set_title('Original Frame')
-    axes[0].axis('off')
+    # 拼接三张图
+    combined.paste(frame, (0, 0))
+    combined.paste(precise_mask, (frame.width, 0))
+    combined.paste(bbox_mask, (frame.width * 2, 0))
 
-    axes[1].imshow(precise_mask)
-    axes[1].set_title('Precise Mask (SAM2)')
-    axes[1].axis('off')
+    # 添加标签
+    draw = ImageDraw.Draw(combined)
+    try:
+        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 40)
+    except:
+        try:
+            font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", 40)
+        except:
+            font = ImageFont.load_default()
 
-    axes[2].imshow(bbox_mask)
-    axes[2].set_title('Bbox Mask (Rectangle)')
-    axes[2].axis('off')
+    labels = ['Original Frame', 'Precise Mask (SAM2)', 'Bbox Mask (Rectangle)']
+    for i, label in enumerate(labels):
+        x = i * frame.width + 10
+        y = 10
+        # 白色文字，黑色描边
+        draw.text((x, y), label, fill='white', font=font, stroke_width=3, stroke_fill='black')
 
-    plt.tight_layout()
-    plt.savefig(output_path, dpi=150, bbox_inches='tight')
-    plt.close()
-
+    combined.save(output_path)
     print(f"Comparison saved to {output_path}")
 
 
@@ -221,7 +231,15 @@ def main():
                 model_id="Wan-AI/Wan2.1-VACE-1.3B",
                 origin_file_pattern="models_t5_umt5-xxl-enc-bf16.pth"
             ),
-        ]
+            ModelConfig(
+                model_id="Wan-AI/Wan2.1-VACE-1.3B",
+                origin_file_pattern="Wan2.1_VAE.pth"
+            ),
+        ],
+        tokenizer_config=ModelConfig(
+            model_id="Wan-AI/Wan2.1-T2V-1.3B",
+            origin_file_pattern="google/umt5-xxl/"
+        ),
     )
 
     prompt = "yellow rubber duck toy, product display, studio lighting"
@@ -243,8 +261,7 @@ def main():
         num_frames=NUM_FRAMES,
         num_inference_steps=50,
         cfg_scale=7.5,
-        embedded_cfg_scale=6.0,
-        seed=SEED,
+                seed=SEED,
     )
 
     # 后处理：合成
@@ -288,8 +305,7 @@ def main():
         num_frames=NUM_FRAMES,
         num_inference_steps=50,
         cfg_scale=7.5,
-        embedded_cfg_scale=6.0,
-        seed=SEED,
+                seed=SEED,
     )
 
     # 后处理
